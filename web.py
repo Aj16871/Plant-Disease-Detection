@@ -5,7 +5,7 @@ import numpy as np  # prints the current working directory
 # Load the model (cache to avoid reloading on every prediction)
 @st.cache_resource
 def load_model():
-    return tf.keras.models.load_model("training_model.keras")
+    return tf.keras.models.load_model("models/training_model.keras")
 # Preprocess the uploaded image for prediction
 def preprocess_image(image):
     img = tf.keras.preprocessing.image.load_img(image, target_size=(128, 128))
