@@ -127,18 +127,7 @@ class Precaution:
                 'symptoms': "N/A\n",
                 'management': "Continue regular care to maintain plant health.\n"
             },
-            'Raspberry___healthy': {
-                'precaution': "No precautions needed, the plant is healthy.\n",
-                'cause': "N/A\n",
-                'symptoms': "N/A\n",
-                'management': "Continue regular care to maintain plant health."
-            },
-            'Soybean___healthy': {
-                'precaution': "No precautions needed, the plant is healthy.\n",
-                'cause': "N/A\n",
-                'symptoms': "N/A\n",
-                'management': "Continue regular care to maintain plant health."
-            },
+            
             'Squash___Powdery_mildew': {
                 'precaution': "Apply fungicides, remove infected leaves, and maintain good orchard hygiene to prevent further spread.\n",
                 'cause': "Caused by several species of fungi, including *Podosphaera xanthii* and *Erysiphe cichoracearum*.\n",
@@ -151,29 +140,12 @@ class Precaution:
                 'symptoms': "Irregular, dark purple spots on leaves, leading to leaf browning and drying.\n",
                 'management': "Remove and destroy infected leaves, ensure good air circulation, and apply fungicides as needed."
             },
-            'Strawberry___healthy': {
-                'precaution': "No precautions needed, the plant is healthy.\n",
-                'cause': "N/A\n",
-                'symptoms': "N/A\n",
-                'management': "Continue regular care to maintain plant health."
-            },
+            
             'Tomato___Early_blight': {
                 'precaution': "Apply fungicides, remove infected leaves, and maintain good orchard hygiene to prevent further spread.\n",
                 'cause': "Caused by the fungus *Alternaria solani*, which thrives in warm, wet conditions.\n",
                 'symptoms': "Dark brown spots with concentric rings on leaves, leading to defoliation.\n",
                 'management': "Use certified seeds, rotate crops, and apply fungicides during wet weather.\n"
-            },
-            'Tomato___Tomato_Yellow_Leaf_Curl_Virus': {
-                'precaution': "Control whitefly population and remove infected plants to prevent further spread.\n",
-                'cause': "Caused by the *Tomato yellow leaf curl virus (TYLCV)*, transmitted by the whitefly *Bemisia tabaci*.\n",
-                'symptoms': "Yellowing and upward curling of leaves, stunted growth, and reduced fruit set.\n",
-                'management': "Control whitefly populations with insecticides, remove infected plants, and use resistant varieties.\n"
-            },
-            'Tomato___Tomato_mosaic_virus': {
-                'precaution': "Remove infected plants and sanitize tools to prevent further spread.\n",
-                'cause': "Caused by the *Tomato mosaic virus (ToMV)*, spread by contact with infected plants or contaminated tools.\n",
-                'symptoms': "Mottling and mosaic-like patterns on leaves, reduced fruit quality, and stunted growth.\n",
-                'management': "Remove and destroy infected plants, disinfect tools, and avoid planting susceptible varieties.\n"
             },
             'Tomato___healthy': {
                 'precaution': "No precautions needed, the plant is healthy.\n",
