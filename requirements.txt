@@ -3,3 +3,4 @@ tensorflow
 numpy
 requests
 protobuf
+python==3.10
