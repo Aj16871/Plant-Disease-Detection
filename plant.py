@@ -638,7 +638,7 @@ def soil_classification_page():
         }
 
         crop_recommendations = {
-            "Yellow Soil": {
+     "Yellow Soil": {
         "Best Crops": ["Cotton", "Wheat"],
         "Fertilizer": "Apply NPK 12-32-16 fertilizer at 100 kg/ha.",
         "Cost Estimator (Fertilizer)": "₹5,000 - ₹7,000 per ha",
@@ -683,7 +683,7 @@ def soil_classification_page():
         "Government Scheme (MSP)": "₹4,500 per quintal (Cotton), ₹3,500 per quintal (Soybean)",
         "Supported Tractors": "Sonalika, New Holland"
     }
-}
+          }
         
 
         predicted_class = np.argmax(prediction)
@@ -692,6 +692,13 @@ def soil_classification_page():
         st.success(f"🧑‍🌾 Soil Type: **{soil_type}**")
         st.write(f"**Best Crops to Grow:** {', '.join(crop_recommendations[soil_type]['Best Crops'])}")
         st.write(f"**Recommended Fertilizer:** {crop_recommendations[soil_type]['Fertilizer']}")
+        st.write(f"**Cost Estimator (Fertilizer)** {crop_recommendations[soil_type]['Cost Estimator (Fertilizer)']}")
+        st.write(f"**Cost Estimator (Crop)** {crop_recommendations[soil_type]['Cost Estimator (Crop)']}")
+        st.write(f"**Suitable City** {crop_recommendations[soil_type]['Suitable City']}")
+        st.write(f"**MSP** {crop_recommendations[soil_type]['Government Scheme (MSP)']}")
+        st.write(f"**Supported Tractors** {crop_recommendations[soil_type]['Supported Tractors']}")
+        
+
 
 if "language" not in st.session_state:
     st.session_state.language = "English"
