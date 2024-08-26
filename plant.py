@@ -88,12 +88,33 @@ translations = {
     }
 }
 
+def get_user_location():
+    try:
+        # Using an external service to get IP-based location data
+        location_data = requests.get("https://ipapi.co/json/").json()
+        city = location_data.get("city")
+        country = location_data.get("country_name")
+        lat = location_data.get("latitude")
+        lon = location_data.get("longitude")
+        return city, country, lat, lon
+    except Exception as e:
+        st.error("Unable to get location information.")
+        return None, None, None, None
+
+# Function to fetch weather data
 def fetch_weather(api_key, city_name):
     url = f"http://api.openweathermap.org/data/2.5/weather?q={city_name}&appid={api_key}&units=metric"
     response = requests.get(url)
     return response.json()
 
-def display_weather(weather_data):
+# Function to fetch air quality data
+def fetch_air_quality(api_key, lat, lon):
+    url = f"http://api.openweathermap.org/data/2.5/air_pollution?lat={lat}&lon={lon}&appid={api_key}"
+    response = requests.get(url)
+    return response.json()
+
+# Function to display weather and farming data
+def display_weather_and_farming_data(weather_data, air_quality_data):
     if weather_data.get("cod") != 200:
         st.error("City not found or API limit reached.")
         return
@@ -102,8 +123,12 @@ def display_weather(weather_data):
     country = weather_data["sys"]["country"]
     temp = weather_data["main"]["temp"]
     feels_like = weather_data["main"]["feels_like"]
+    humidity = weather_data["main"]["humidity"]
     weather_description = weather_data["weather"][0]["description"].capitalize()
     icon = weather_data["weather"][0]["icon"]
+
+    air_quality_index = air_quality_data["list"][0]["main"]["aqi"]
+    air_quality = ["Good", "Fair", "Moderate", "Poor", "Very Poor"][air_quality_index - 1]
 
     st.markdown(f"""
         <div style="text-align: center; background: linear-gradient(135deg, #89f7fe 0%, #66a6ff 100%); padding: 20px; border-radius: 10px; color: #ffffff;">
@@ -112,32 +137,46 @@ def display_weather(weather_data):
             <h3 style="font-size: 28px;">{weather_description}</h3>
             <p style="font-size: 24px;"><strong>Temperature:</strong> {temp}°C</p>
             <p style="font-size: 24px;"><strong>Feels Like:</strong> {feels_like}°C</p>
+            <p style="font-size: 24px;"><strong>Humidity:</strong> {humidity}%</p>
+            <p style="font-size: 24px;"><strong>Air Quality:</strong> {air_quality}</p>
         </div>
     """, unsafe_allow_html=True)
 
+# Main function for the weather page
 def weather_page():
     st.markdown("""
         <div style="text-align: center; background: linear-gradient(135deg, #89f7fe 0%, #66a6ff 100%); padding: 20px; border-radius: 10px;">
-            <h1 style="color: #ffffff; font-family: 'Poppins', sans-serif; font-size: 48px;">Weather Information</h1>
+            <h1 style="color: #ffffff; font-family: 'Poppins', sans-serif; font-size: 48px;">Weather and Farming Information</h1>
         </div>
     """, unsafe_allow_html=True)
 
     api_key = "e3adae5cd3177f317493c05f71b7062c"  # Your OpenWeather API key
-    city_name = st.text_input("Enter city name", "")
+
+    city_name, country_name, lat, lon = get_user_location()
     
-    if st.button("Get Weather", key="weather_button"):
-        if city_name:
-            weather_data = fetch_weather(api_key, city_name)
-            display_weather(weather_data)
-        else:
-            st.error("Please enter a city name.")
+    if city_name and lat and lon:
+        st.success(f"Detected location: {city_name}, {country_name}")
+        weather_data = fetch_weather(api_key, city_name)
+        air_quality_data = fetch_air_quality(api_key, lat, lon)
+        display_weather_and_farming_data(weather_data, air_quality_data)
+    else:
+        st.error("Could not detect your location. Please enter the city name manually.")
+        city_name = st.text_input("Enter city name", "")
+        if st.button("Get Weather", key="weather_button"):
+            if city_name:
+                weather_data = fetch_weather(api_key, city_name)
+                air_quality_data = fetch_air_quality(api_key, lat, lon)
+                display_weather_and_farming_data(weather_data, air_quality_data)
+            else:
+                st.error("Please enter a city name.")
 
 def fetch_agriculture_news(api_key):
-    url = f"https://newsapi.org/v2/everything?q=agriculture&apiKey={api_key}"
+    url = f"https://newsapi.org/v2/everything?q=agriculture+India&apiKey={api_key}"
     response = requests.get(url)
     articles = response.json().get('articles')
     return articles
 
+# Function to display the fetched news
 def display_news(articles):
     for article in articles:
         st.subheader(article['title'])
@@ -151,14 +190,18 @@ def display_news(articles):
         
         st.write("---")
 
+# Function for the news page focused on India
 def news_page():
     st.markdown("""
         <div style="text-align: center; background: linear-gradient(135deg, #FF8008 0%, #FFC837 100%); padding: 20px; border-radius: 10px;">
             <h1 style="color: #ffffff; font-family: 'Poppins', sans-serif; font-size: 48px;">Agriculture News</h1>
         </div>
     """, unsafe_allow_html=True)
-    
+
+    # API key for NewsAPI
     api_key = "9d657e5a32c5441d85c4bace7fad400b"
+
+    # Fetch and display agriculture news articles for India
     articles = fetch_agriculture_news(api_key)
     if articles:
         display_news(articles)
