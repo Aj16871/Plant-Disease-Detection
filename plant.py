@@ -888,7 +888,7 @@ elif app_mode == "Contact Bot":
         """,
         unsafe_allow_html=True,
     )
-elif app_mode == translations[st.session_state.language]["webcam_live_feed"]:
+elif app_mode =="Webcam_live_feed":
     st.markdown(f"<h1>{translations[st.session_state.language]['webcam_live_feed']}</h1>", unsafe_allow_html=True)
     st.markdown(f"<p>{translations[st.session_state.language]['take_photo']}</p>", unsafe_allow_html=True)
     
