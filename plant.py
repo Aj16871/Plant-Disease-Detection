@@ -803,6 +803,7 @@ st.sidebar.title("Navigation")
 app_mode = st.sidebar.selectbox("Choose a page", [
     "Home",
     "Disease Recognition",
+    "Webcam_live_feed"
     "Soil Classification",
     "Weather",
     "Agriculture News",
@@ -887,3 +888,36 @@ elif app_mode == "Contact Bot":
         """,
         unsafe_allow_html=True,
     )
+elif app_mode == translations[st.session_state.language]["webcam_live_feed"]:
+    st.markdown(f"<h1>{translations[st.session_state.language]['webcam_live_feed']}</h1>", unsafe_allow_html=True)
+    st.markdown(f"<p>{translations[st.session_state.language]['take_photo']}</p>", unsafe_allow_html=True)
+    
+    plant_prefix = st.text_input(translations[st.session_state.language]["enter_plant_name"])
+    run = st.checkbox(translations[st.session_state.language]["run"])
+    
+    if run:
+        img_file_buffer = st.camera_input(translations[st.session_state.language]["take_photo"])
+        
+        if img_file_buffer:
+            st.image(img_file_buffer)
+            if st.button(translations[st.session_state.language]["predict"]):
+                with st.spinner(translations[st.session_state.language]["analyzing_image"]):
+                    predictions = model_prediction(img_file_buffer)
+
+                    class_names = [
+                        'Apple___Cedar_apple_rust', 'Apple___healthy', 'Cherry_(including_sour)___Powdery_mildew',
+                        'Cherry_(including_sour)___healthy', 'Corn_(maize)___Common_rust_', 'Corn_(maize)___healthy',
+                        'Grape___Esca_(Black_Measles)', 'Grape___healthy', 'Orange___Haunglongbing_(Citrus_greening)',
+                        'Peach___Bacterial_spot',  'Pepper,_bell___Bacterial_spot',
+                        'Potato___Early_blight', 
+                        'Squash___Powdery_mildew', 'Strawberry___Leaf_scorch',
+                        'Tomato___Early_blight'
+                    ]
+                    
+                    filtered_class_names = filter_class_names(plant_prefix, class_names)
+                    if filtered_class_names:
+                        class_name = get_class_name_from_predictions(predictions, filtered_class_names, class_names)
+                        display_prediction(class_name, language=st.session_state.language)
+                    else:
+                        st.warning(translations[st.session_state.language]["no_classes_match"])
+
