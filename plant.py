@@ -639,26 +639,52 @@ def soil_classification_page():
 
         crop_recommendations = {
             "Yellow Soil": {
-                "Best Crops": ["Cotton", "Wheat"],
-                "Fertilizer": "Apply NPK 12-32-16 fertilizer at 100 kg/ha."
-            },
-            "Peat Soil": {
-                "Best Crops": ["Rice", "Sugarcane"],
-                "Fertilizer": "Use organic compost and NPK 10-26-26 fertilizer."
-            },
-            "Laterite Soil": {
-                "Best Crops": ["Coconut", "Tea"],
-                "Fertilizer": "Apply potassium-rich fertilizers like K2O."
-            },
-            "Cinder Soil": {
-                "Best Crops": ["Millet", "Maize"],
-                "Fertilizer": "Use balanced NPK 15-15-15 fertilizer."
-            },
-            "Black Soil": {
-                "Best Crops": ["Cotton", "Soybean"],
-                "Fertilizer": "Apply NPK 20-10-10 fertilizer at 50 kg/ha."
-            }
-        }
+        "Best Crops": ["Cotton", "Wheat"],
+        "Fertilizer": "Apply NPK 12-32-16 fertilizer at 100 kg/ha.",
+        "Cost Estimator (Fertilizer)": "₹5,000 - ₹7,000 per ha",
+        "Cost Estimator (Crop)": "₹15,000 - ₹20,000 per ha",
+        "Suitable City": "Ahmedabad, Gujarat",
+        "Government Scheme (MSP)": "₹4,500 per quintal (Cotton), ₹2,500 per quintal (Wheat)",
+        "Supported Tractors": "Mahindra, John Deere"
+    },
+    "Peat Soil": {
+        "Best Crops": ["Rice", "Sugarcane"],
+        "Fertilizer": "Use organic compost and NPK 10-26-26 fertilizer.",
+        "Cost Estimator (Fertilizer)": "₹3,000 - ₹5,000 per ha",
+        "Cost Estimator (Crop)": "₹25,000 - ₹35,000 per ha",
+        "Suitable City": "Kolkata, West Bengal",
+        "Government Scheme (MSP)": "₹2,500 per quintal (Rice), ₹3,500 per quintal (Sugarcane)",
+        "Supported Tractors": "Sonalika, New Holland"
+    },
+    "Laterite Soil": {
+        "Best Crops": ["Coconut", "Tea"],
+        "Fertilizer": "Apply potassium-rich fertilizers like K2O.",
+        "Cost Estimator (Fertilizer)": "₹4,000 - ₹6,000 per ha",
+        "Cost Estimator (Crop)": "₹30,000 - ₹40,000 per ha",
+        "Suitable City": "Kochi, Kerala",
+        "Government Scheme (MSP)": "₹1,500 per quintal (Coconut), ₹2,000 per quintal (Tea)",
+        "Supported Tractors": "Escorts, Swaraj"
+    },
+    "Cinder Soil": {
+        "Best Crops": ["Millet", "Maize"],
+        "Fertilizer": "Use balanced NPK 15-15-15 fertilizer.",
+        "Cost Estimator (Fertilizer)": "₹2,500 - ₹4,000 per ha",
+        "Cost Estimator (Crop)": "₹10,000 - ₹15,000 per ha",
+        "Suitable City": "Hyderabad, Telangana",
+        "Government Scheme (MSP)": "₹2,000 per quintal (Millet), ₹1,800 per quintal (Maize)",
+        "Supported Tractors": "Mahindra, John Deere"
+    },
+    "Black Soil": {
+        "Best Crops": ["Cotton", "Soybean"],
+        "Fertilizer": "Apply NPK 20-10-10 fertilizer at 50 kg/ha.",
+        "Cost Estimator (Fertilizer)": "₹4,500 - ₹6,500 per ha",
+        "Cost Estimator (Crop)": "₹18,000 - ₹25,000 per ha",
+        "Suitable City": "Nagpur, Maharashtra",
+        "Government Scheme (MSP)": "₹4,500 per quintal (Cotton), ₹3,500 per quintal (Soybean)",
+        "Supported Tractors": "Sonalika, New Holland"
+    }
+}
+        
 
         predicted_class = np.argmax(prediction)
         soil_type = soil_classes[predicted_class]
