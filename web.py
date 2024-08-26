@@ -116,21 +116,21 @@ def display_weather(weather_data, air_quality_data):
     air_quality = ["Good", "Fair", "Moderate", "Poor", "Very Poor"][air_quality_index - 1]
 
     st.markdown(f"""
-        <div style="text-align: center; background: linear-gradient(135deg, #89f7fe 0%, #66a6ff 100%); padding: 20px; border-radius: 10px; color: #ffffff;">
-            <h2 style="font-size: 36px;">Weather in {city}, {country}</h2>
-            <img src="http://openweathermap.org/img/wn/{icon}.png" style="width: 100px;"/>
-            <h3 style="font-size: 28px;">{weather_description}</h3>
-            <p style="font-size: 24px;"><strong>Temperature:</strong> {temp}°C</p>
-            <p style="font-size: 24px;"><strong>Feels Like:</strong> {feels_like}°C</p>
-            <p style="font-size: 24px;"><strong>Humidity:</strong> {humidity}%</p>
-            <p style="font-size: 24px;"><strong>Air Quality:</strong> {air_quality}</p>
+        <div style="text-align: center; background: linear-gradient(135deg, #89f7fe 0%, #66a6ff 100%); padding: 10px; border-radius: 10px; color: #ffffff;">
+            <h2 style="font-size: 24px;">Weather in {city}, {country}</h2>
+            <img src="http://openweathermap.org/img/wn/{icon}.png" style="width: 60px;"/>
+            <h3 style="font-size: 18px;">{weather_description}</h3>
+            <p style="font-size: 16px;"><strong>Temperature:</strong> {temp}°C</p>
+            <p style="font-size: 16px;"><strong>Feels Like:</strong> {feels_like}°C</p>
+            <p style="font-size: 16px;"><strong>Humidity:</strong> {humidity}%</p>
+            <p style="font-size: 16px;"><strong>Air Quality:</strong> {air_quality}</p>
         </div>
     """, unsafe_allow_html=True)
 
 def weather_page():
     st.markdown("""
-        <div style="text-align: center; background: linear-gradient(135deg, #89f7fe 0%, #66a6ff 100%); padding: 20px; border-radius: 10px;">
-            <h1 style="color: #ffffff; font-family: 'Poppins', sans-serif; font-size: 48px;">Weather Information</h1>
+        <div style="text-align: center; background: linear-gradient(135deg, #89f7fe 0%, #66a6ff 100%); padding: 10px; border-radius: 10px;">
+            <h1 style="color: #ffffff; font-family: 'Poppins', sans-serif; font-size: 28px;">Weather Information</h1>
         </div>
     """, unsafe_allow_html=True)
 
@@ -186,8 +186,8 @@ def display_news(articles):
 # Function for the news page focused on India
 def news_page():
     st.markdown("""
-        <div style="text-align: center; background: linear-gradient(135deg, #FF8008 0%, #FFC837 100%); padding: 20px; border-radius: 10px;">
-            <h1 style="color: #ffffff; font-family: 'Poppins', sans-serif; font-size: 48px;">Agriculture News</h1>
+        <div style="text-align: center; background: linear-gradient(135deg, #FF8008 0%, #FFC837 100%); padding: 10px; border-radius: 10px;">
+            <h1 style="color: #ffffff; font-family: 'Poppins', sans-serif; font-size: 28px;">Agriculture News</h1>
         </div>
     """, unsafe_allow_html=True)
 
@@ -221,6 +221,7 @@ def get_class_name_from_predictions(predictions, filtered_class_names, class_nam
     return filtered_class_names[max_prediction_index]
 
 class Precaution:
+    
     def __init__(self, language="English"):
         self.language = language
         self.disease_details = {
@@ -637,6 +638,47 @@ class Precaution:
         else:
             return "No specific precautions available for this disease."
 
+    def __init__(self, language="English"):
+        self.language = language
+        self.disease_details = {
+           
+    'Apple___Cedar_apple_rust': {
+        'precaution': {
+            "English": "Apply fungicides, remove infected leaves, and maintain good orchard hygiene to prevent further spread.\n",
+            "Hindi": "फफूंदनाशकों का उपयोग करें, संक्रमित पत्तियों को हटा दें और आगे फैलने से रोकने के लिए अच्छी बागवानी स्वच्छता बनाए रखें।\n"
+        },
+        'cause': {
+            "English": "Caused by the fungus *Gymnosporangium juniperi-virginianae*, which requires both apple and cedar trees to complete its lifecycle.\n",
+            "Hindi": "फफूंद *जिम्नोस्पोरेंजियम जुनीपेरी-वर्जिनियाना* के कारण होता है, जिसे अपना जीवन चक्र पूरा करने के लिए सेब और देवदार दोनों पेड़ों की आवश्यकता होती है।\n"
+        },
+        'symptoms': {
+            "English": "Yellow-orange spots on leaves, which later develop black, cup-shaped structures.\n",
+            "Hindi": "पत्तियों पर पीले-नारंगी धब्बे, जो बाद में काले, कप के आकार की संरचनाएं विकसित करते हैं।\n"
+        },
+        'management': {
+            "English": "Remove nearby cedar trees or galls, apply fungicides, and plant resistant apple varieties.\n",
+            "Hindi": "पास के देवदार के पेड़ या गॉल्स हटा दें, फफूंदनाशकों का उपयोग करें और प्रतिरोधी सेब की किस्में लगाएं।\n"
+        },
+        'fertilizer': {
+            "English": "Use a balanced fertilizer like 10-10-10 (NPK) in early spring. Apply 2-4 pounds per tree, depending on the age and size of the tree. Ensure that the fertilizer is spread evenly around the root zone.\n",
+            "Hindi": "शुरुआत में 10-10-10 (NPK) जैसे संतुलित उर्वरक का उपयोग करें। पेड़ की उम्र और आकार के अनुसार 2-4 पाउंड प्रति पेड़ लगाएं। सुनिश्चित करें कि उर्वरक को जड़ क्षेत्र के चारों ओर समान रूप से फैलाया जाए।\n"
+        }
+    }
+        }
+
+def get_precaution(self, class_name):
+        disease_info = self.disease_details.get(class_name)
+        if disease_info:
+            return (
+                f"**{translations[self.language]['precaution']}:** {disease_info['precaution'][self.language]}\n"
+                f"**{translations[self.language]['cause']}:** {disease_info['cause'][self.language]}\n"
+                f"**{translations[self.language]['symptoms']}:** {disease_info['symptoms'][self.language]}\n"
+                f"**{translations[self.language]['management']}:** {disease_info['management'][self.language]}\n"
+                f"**{translations[self.language]['fertilizer']}:** {disease_info['fertilizer'][self.language]}\n"
+            )
+        else:
+            return "No specific precautions available for this disease."
+
 def display_prediction(class_name, language):
     precaution = Precaution(language=language)
     st.success(f"🌿 Model predicts: **{class_name}**")
@@ -646,7 +688,7 @@ def display_prediction(class_name, language):
 
 
 def soil_classification_page():
-    st.markdown(""" <div style="text-align: center; background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); padding: 20px; border-radius: 10px;"> <h1 style="color: #ffffff; font-family: 'Poppins', sans-serif; font-size: 48px;">Soil Classification and Crop Recommendation</h1> </div> """, unsafe_allow_html=True)
+    st.markdown(""" <div style="text-align: center; background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); padding: 10px; border-radius: 10px;"> <h1 style="color: #ffffff; font-family: 'Poppins', sans-serif; font-size: 28px;">Soil Classification and Crop Recommendation</h1> </div> """, unsafe_allow_html=True)
 
     st.write("Upload an image of soil, and the system will classify it and recommend the best crops to grow.")
 
@@ -722,7 +764,9 @@ def soil_classification_page():
         "Government Scheme (MSP)": "₹4,500 per quintal (Cotton), ₹3,500 per quintal (Soybean)",
         "Supported Tractors": "Sonalika, New Holland"
     }
-          }
+          
+
+            }
 
             predicted_class = np.argmax(prediction)
             soil_type = soil_classes[predicted_class]
@@ -826,7 +870,7 @@ st.markdown("""
 
         /* Header custom styling */
         h1 {
-            font-size: 3rem;
+            font-size: 2rem;
             color: #ffffff;
             text-align: center;
             background: linear-gradient(to right, #0072ff, #00c6ff);
