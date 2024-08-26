@@ -803,7 +803,7 @@ st.sidebar.title("Navigation")
 app_mode = st.sidebar.selectbox("Choose a page", [
     "Home",
     "Disease Recognition",
-    "Webcam_live_feed"
+    "Webcam_live_feed",
     "Soil Classification",
     "Weather",
     "Agriculture News",
