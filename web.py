@@ -88,6 +88,157 @@ translations = {
     }
 }
 
+def calculate_carbon_footprint(fertilizer_kg, fuel_liters, electricity_kwh, livestock_count, soil_area_ha):
+    fertilizer_emissions = fertilizer_kg * 2.87  # kg CO₂e/kg
+    fuel_emissions = fuel_liters * 2.68  # kg CO₂e/liter
+    electricity_emissions = electricity_kwh * 0.5  # kg CO₂e/kWh
+    livestock_emissions = livestock_count * 1140  # kg CO₂e/animal/year
+    soil_emissions = soil_area_ha * 200  # kg CO₂e/ha/year
+    total_emissions = fertilizer_emissions + fuel_emissions + electricity_emissions + livestock_emissions + soil_emissions
+    return total_emissions
+
+# Enhanced Sustainable Practices Recommendations
+def sustainable_practices_recommendations():
+    recommendations = {
+        "Use Less Water": "Switch to drip irrigation to save water by up to 60%.",
+        "Use Organic Fertilizers": "Organic fertilizers improve soil health and reduce costs.",
+        "Rotate Crops": "Rotating crops helps maintain soil fertility and controls pests.",
+        "Plant Trees": "Trees reduce erosion, improve water retention, and provide additional income.",
+        "Reduce Chemical Inputs": "Minimize pesticide use to protect beneficial insects and soil health.",
+        "Conserve Soil": "No-till farming and cover cropping preserve soil structure.",
+        "Implement Renewable Energy": "Solar and wind energy can lower costs and reduce carbon footprint.",
+        "Enhance Biodiversity": "Diverse crops support beneficial insects and soil health.",
+        "Adopt Precision Agriculture": "Use technology to optimize resource use and increase efficiency.",
+        "Participate in Carbon Sequestration": "Sequester carbon through tree planting and no-till farming."
+    }
+    return recommendations
+
+# Why Reduce Carbon Footprint?
+def why_reduce_carbon_footprint():
+    st.markdown("""
+        <table style="width: 100%; font-family: 'Poppins', sans-serif; border-collapse: collapse; background-color: #5d94b0; padding: 10px; border-radius: 10px;">
+            <tr style="background-color: #388E3C; color: white;">
+                <th style="padding: 10px; text-align: left; font-size: 18px;">Why Reduce Carbon Footprint?</th>
+            </tr>
+            <tr>
+                <td style="padding: 10px; text-align: left;">
+                    <b>Save Money</b>: Using less fuel and fertilizers reduces your costs.
+                </td>
+            </tr>
+            <tr>
+                <td style="padding: 10px; text-align: left;">
+                    <b>Increase Profits</b>: Healthier soil and crops lead to better yields and higher prices.
+                </td>
+            </tr>
+            <tr>
+                <td style="padding: 10px; text-align: left;">
+                    <b>Protect the Environment</b>: Reducing pollution helps protect the land, water, and air for future generations.
+                </td>
+            </tr>
+            <tr>
+                <td style="padding: 10px; text-align: left;">
+                    <b>Government Support</b>: The government offers support and subsidies for sustainable farming practices.
+                </td>
+            </tr>
+        </table>
+    """, unsafe_allow_html=True)
+
+# What Should Be the Average Carbon Footprint per Hectare?
+def average_carbon_footprint_info():
+    st.markdown("""
+        <table style="width: 100%; font-family: 'Poppins', sans-serif; border-collapse: collapse; background-color: #5d94b0; padding: 10px; border-radius: 10px;">
+            <tr style="background-color: #8BC34A; color: white;">
+                <th style="padding: 10px; text-align: left; font-size: 18px;">Average Carbon Footprint per Hectare in India</th>
+            </tr>
+            <tr>
+                <td style="padding: 10px; text-align: left;">
+                    The average carbon footprint for farming in India is around <b>3 to 4 tons of CO₂e</b> per hectare per year.
+                    By adopting sustainable practices, farmers can reduce this to <b>2 tons of CO₂e</b> per hectare or even lower.
+                </td>
+            </tr>
+        </table>
+    """, unsafe_allow_html=True)
+
+# Carbon Footprint Calculator Page
+def carbon_footprint_page():
+    st.markdown("""
+        <div style="text-align: center; background: linear-gradient(135deg, #8BC34A 0%, #388E3C 100%); padding: 10px; border-radius: 10px;">
+            <h1 style="color: #ffffff; font-family: 'Poppins', sans-serif; font-size: 22px;">Calculate Your Carbon Footprint</h1>
+        </div>
+    """, unsafe_allow_html=True)
+
+    fertilizer_kg = st.number_input("Fertilizer Use (kg):", value=500)
+    fuel_liters = st.number_input("Fuel Consumption (liters):", value=1000)
+    electricity_kwh = st.number_input("Electricity Consumption (kWh):", value=5000)
+    livestock_count = st.number_input("Number of Livestock:", value=10)
+    soil_area_ha = st.number_input("Soil Area Managed (hectares):", value=10)
+
+    if st.button("Calculate Carbon Footprint"):
+        carbon_footprint = calculate_carbon_footprint(fertilizer_kg, fuel_liters, electricity_kwh, livestock_count, soil_area_ha)
+        
+        st.markdown(f"""
+            <table style="width: 100%; font-family: 'Poppins', sans-serif; border-collapse: collapse; background-color: #5d94b0; padding: 10px; border-radius: 10px;">
+                <thead style="background-color: #388E3C; color: white;">
+                    <tr>
+                        <th style="padding: 10px; text-align: left;">Category</th>
+                        <th style="padding: 10px; text-align: right;">Emission (kg CO₂e/year)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td style="padding: 10px; text-align: left;">Fertilizer</td>
+                        <td style="padding: 10px; text-align: right;">{fertilizer_kg * 2.87:.2f}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 10px; text-align: left;">Fuel</td>
+                        <td style="padding: 10px; text-align: right;">{fuel_liters * 2.68:.2f}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 10px; text-align: left;">Electricity</td>
+                        <td style="padding: 10px; text-align: right;">{electricity_kwh * 0.5:.2f}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 10px; text-align: left;">Livestock</td>
+                        <td style="padding: 10px; text-align: right;">{livestock_count * 1140:.2f}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 10px; text-align: left;">Soil</td>
+                        <td style="padding: 10px; text-align: right;">{soil_area_ha * 200:.2f}</td>
+                    </tr>
+                    <tr style="background-color: #0b8766;">
+                        <td style="padding: 10px; text-align: left;"><b>Total Emissions</b></td>
+                        <td style="padding: 10px; text-align: right;"><b>{carbon_footprint:.2f} tons CO₂e/year</b></td>
+                    </tr>
+                </tbody>
+            </table>
+        """, unsafe_allow_html=True)
+
+        average_carbon_footprint_info()
+
+        # Warning if carbon footprint is higher than the average
+        if carbon_footprint / soil_area_ha > 4000.00:
+            st.markdown("""
+                <div style="background-color: #FFCDD2; padding: 10px; border-radius: 10px; color: #B71C1C; margin-top: 10px;">
+                    ⚠️ Your carbon footprint is higher than the average. Consider adopting sustainable practices to reduce it.
+                </div>
+            """, unsafe_allow_html=True)
+        else:
+            st.markdown("""
+                <div style="background-color: #C8E6C9; padding: 10px; border-radius: 10px; color: #388E3C; margin-top: 10px;">
+                    ✅ Your carbon footprint is within the average range.
+                </div>
+            """, unsafe_allow_html=True)
+
+        st.markdown("<h2 style='color: #388E3C;'>Suggestions to Reduce Carbon Footprint:</h2>", unsafe_allow_html=True)
+        recommendations = sustainable_practices_recommendations()
+        st.markdown("<table style='width: 100%; font-family: \"Poppins\", sans-serif; border-collapse: collapse;'>", unsafe_allow_html=True)
+        for key, value in recommendations.items():
+            st.markdown(f"<tr><td style='padding: 8px; border: 1px solid #ddd;'><b>{key}</b></td><td style='padding: 8px; border: 1px solid #ddd;'>{value}</td></tr>", unsafe_allow_html=True)
+        st.markdown("</table>", unsafe_allow_html=True)
+
+        why_reduce_carbon_footprint()
+
+
 # Function to get user location
 def fetch_weather(api_key, lat, lon):
     url = f"http://api.openweathermap.org/data/2.5/weather?lat={lat}&lon={lon}&appid={api_key}&units=metric"
@@ -116,21 +267,21 @@ def display_weather(weather_data, air_quality_data):
     air_quality = ["Good", "Fair", "Moderate", "Poor", "Very Poor"][air_quality_index - 1]
 
     st.markdown(f"""
-        <div style="text-align: center; background: linear-gradient(135deg, #89f7fe 0%, #66a6ff 100%); padding: 10px; border-radius: 10px; color: #ffffff;">
-            <h2 style="font-size: 24px;">Weather in {city}, {country}</h2>
-            <img src="http://openweathermap.org/img/wn/{icon}.png" style="width: 60px;"/>
-            <h3 style="font-size: 18px;">{weather_description}</h3>
-            <p style="font-size: 16px;"><strong>Temperature:</strong> {temp}°C</p>
-            <p style="font-size: 16px;"><strong>Feels Like:</strong> {feels_like}°C</p>
-            <p style="font-size: 16px;"><strong>Humidity:</strong> {humidity}%</p>
-            <p style="font-size: 16px;"><strong>Air Quality:</strong> {air_quality}</p>
+        <div style="text-align: center; background: linear-gradient(135deg, #89f7fe 0%, #66a6ff 100%); padding: 20px; border-radius: 10px; color: #ffffff;">
+            <h2 style="font-size: 36px;">Weather in {city}, {country}</h2>
+            <img src="http://openweathermap.org/img/wn/{icon}.png" style="width: 100px;"/>
+            <h3 style="font-size: 28px;">{weather_description}</h3>
+            <p style="font-size: 24px;"><strong>Temperature:</strong> {temp}°C</p>
+            <p style="font-size: 24px;"><strong>Feels Like:</strong> {feels_like}°C</p>
+            <p style="font-size: 24px;"><strong>Humidity:</strong> {humidity}%</p>
+            <p style="font-size: 24px;"><strong>Air Quality:</strong> {air_quality}</p>
         </div>
     """, unsafe_allow_html=True)
 
 def weather_page():
     st.markdown("""
-        <div style="text-align: center; background: linear-gradient(135deg, #89f7fe 0%, #66a6ff 100%); padding: 10px; border-radius: 10px;">
-            <h1 style="color: #ffffff; font-family: 'Poppins', sans-serif; font-size: 28px;">Weather Information</h1>
+        <div style="text-align: center; background: linear-gradient(135deg, #89f7fe 0%, #66a6ff 100%); padding: 20px; border-radius: 10px;">
+            <h1 style="color: #ffffff; font-family: 'Poppins', sans-serif; font-size: 48px;">Weather Information</h1>
         </div>
     """, unsafe_allow_html=True)
 
@@ -186,8 +337,8 @@ def display_news(articles):
 # Function for the news page focused on India
 def news_page():
     st.markdown("""
-        <div style="text-align: center; background: linear-gradient(135deg, #FF8008 0%, #FFC837 100%); padding: 10px; border-radius: 10px;">
-            <h1 style="color: #ffffff; font-family: 'Poppins', sans-serif; font-size: 28px;">Agriculture News</h1>
+        <div style="text-align: center; background: linear-gradient(135deg, #FF8008 0%, #FFC837 100%); padding: 20px; border-radius: 10px;">
+            <h1 style="color: #ffffff; font-family: 'Poppins', sans-serif; font-size: 48px;">Agriculture News</h1>
         </div>
     """, unsafe_allow_html=True)
 
@@ -201,7 +352,7 @@ def news_page():
     else:
         st.write("Failed to fetch news articles. Please check your API key.")
         
-
+@st.cache_resource
 def model_prediction(test_image):
     model = tf.keras.models.load_model("training_model.keras")
     image = tf.keras.preprocessing.image.load_img(test_image, target_size=(128, 128))
@@ -638,47 +789,6 @@ class Precaution:
         else:
             return "No specific precautions available for this disease."
 
-    def __init__(self, language="English"):
-        self.language = language
-        self.disease_details = {
-           
-    'Apple___Cedar_apple_rust': {
-        'precaution': {
-            "English": "Apply fungicides, remove infected leaves, and maintain good orchard hygiene to prevent further spread.\n",
-            "Hindi": "फफूंदनाशकों का उपयोग करें, संक्रमित पत्तियों को हटा दें और आगे फैलने से रोकने के लिए अच्छी बागवानी स्वच्छता बनाए रखें।\n"
-        },
-        'cause': {
-            "English": "Caused by the fungus *Gymnosporangium juniperi-virginianae*, which requires both apple and cedar trees to complete its lifecycle.\n",
-            "Hindi": "फफूंद *जिम्नोस्पोरेंजियम जुनीपेरी-वर्जिनियाना* के कारण होता है, जिसे अपना जीवन चक्र पूरा करने के लिए सेब और देवदार दोनों पेड़ों की आवश्यकता होती है।\n"
-        },
-        'symptoms': {
-            "English": "Yellow-orange spots on leaves, which later develop black, cup-shaped structures.\n",
-            "Hindi": "पत्तियों पर पीले-नारंगी धब्बे, जो बाद में काले, कप के आकार की संरचनाएं विकसित करते हैं।\n"
-        },
-        'management': {
-            "English": "Remove nearby cedar trees or galls, apply fungicides, and plant resistant apple varieties.\n",
-            "Hindi": "पास के देवदार के पेड़ या गॉल्स हटा दें, फफूंदनाशकों का उपयोग करें और प्रतिरोधी सेब की किस्में लगाएं।\n"
-        },
-        'fertilizer': {
-            "English": "Use a balanced fertilizer like 10-10-10 (NPK) in early spring. Apply 2-4 pounds per tree, depending on the age and size of the tree. Ensure that the fertilizer is spread evenly around the root zone.\n",
-            "Hindi": "शुरुआत में 10-10-10 (NPK) जैसे संतुलित उर्वरक का उपयोग करें। पेड़ की उम्र और आकार के अनुसार 2-4 पाउंड प्रति पेड़ लगाएं। सुनिश्चित करें कि उर्वरक को जड़ क्षेत्र के चारों ओर समान रूप से फैलाया जाए।\n"
-        }
-    }
-        }
-
-def get_precaution(self, class_name):
-        disease_info = self.disease_details.get(class_name)
-        if disease_info:
-            return (
-                f"**{translations[self.language]['precaution']}:** {disease_info['precaution'][self.language]}\n"
-                f"**{translations[self.language]['cause']}:** {disease_info['cause'][self.language]}\n"
-                f"**{translations[self.language]['symptoms']}:** {disease_info['symptoms'][self.language]}\n"
-                f"**{translations[self.language]['management']}:** {disease_info['management'][self.language]}\n"
-                f"**{translations[self.language]['fertilizer']}:** {disease_info['fertilizer'][self.language]}\n"
-            )
-        else:
-            return "No specific precautions available for this disease."
-
 def display_prediction(class_name, language):
     precaution = Precaution(language=language)
     st.success(f"🌿 Model predicts: **{class_name}**")
@@ -688,7 +798,7 @@ def display_prediction(class_name, language):
 
 
 def soil_classification_page():
-    st.markdown(""" <div style="text-align: center; background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); padding: 10px; border-radius: 10px;"> <h1 style="color: #ffffff; font-family: 'Poppins', sans-serif; font-size: 28px;">Soil Classification and Crop Recommendation</h1> </div> """, unsafe_allow_html=True)
+    st.markdown(""" <div style="text-align: center; background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); padding: 20px; border-radius: 10px;"> <h1 style="color: #ffffff; font-family: 'Poppins', sans-serif; font-size: 48px;">Soil Classification and Crop Recommendation</h1> </div> """, unsafe_allow_html=True)
 
     st.write("Upload an image of soil, and the system will classify it and recommend the best crops to grow.")
 
@@ -764,9 +874,7 @@ def soil_classification_page():
         "Government Scheme (MSP)": "₹4,500 per quintal (Cotton), ₹3,500 per quintal (Soybean)",
         "Supported Tractors": "Sonalika, New Holland"
     }
-          
-
-            }
+          }
 
             predicted_class = np.argmax(prediction)
             soil_type = soil_classes[predicted_class]
@@ -870,7 +978,7 @@ st.markdown("""
 
         /* Header custom styling */
         h1 {
-            font-size: 2rem;
+            font-size: 3rem;
             color: #ffffff;
             text-align: center;
             background: linear-gradient(to right, #0072ff, #00c6ff);
@@ -972,9 +1080,10 @@ st.markdown("""
 st.sidebar.title("Navigation")
 app_mode = st.sidebar.selectbox("Choose a page", [
     "Home",
+    "Soil Classification",
     "Disease Recognition",
     "Webcam live feed",
-    "Soil Classification",
+    "Carbon Footprint calc",
     "Weather",
     "Agriculture News",
     "Disease Library",
@@ -1090,3 +1199,6 @@ elif app_mode =="Webcam live feed":
                         display_prediction(class_name, language=st.session_state.language)
                     else:
                         st.warning(translations[st.session_state.language]["no_classes_match"])
+
+elif app_mode == "Carbon Footprint calc":
+    carbon_footprint_page()
