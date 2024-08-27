@@ -95,28 +95,78 @@ def calculate_carbon_footprint(fertilizer_kg, fuel_liters, electricity_kwh, live
     livestock_emissions = livestock_count * 1140  # kg CO₂e/animal/year
     soil_emissions = soil_area_ha * 200  # kg CO₂e/ha/year
     total_emissions = fertilizer_emissions + fuel_emissions + electricity_emissions + livestock_emissions + soil_emissions
-    return total_emissions
+    return total_emissions, fertilizer_emissions, fuel_emissions, electricity_emissions, livestock_emissions, soil_emissions
 
-# Enhanced Sustainable Practices Recommendations
-def sustainable_practices_recommendations():
-    recommendations = {
-        "Use Less Water": "Switch to drip irrigation to save water by up to 60%.",
-        "Use Organic Fertilizers": "Organic fertilizers improve soil health and reduce costs.",
-        "Rotate Crops": "Rotating crops helps maintain soil fertility and controls pests.",
-        "Plant Trees": "Trees reduce erosion, improve water retention, and provide additional income.",
-        "Reduce Chemical Inputs": "Minimize pesticide use to protect beneficial insects and soil health.",
-        "Conserve Soil": "No-till farming and cover cropping preserve soil structure.",
-        "Implement Renewable Energy": "Solar and wind energy can lower costs and reduce carbon footprint.",
-        "Enhance Biodiversity": "Diverse crops support beneficial insects and soil health.",
-        "Adopt Precision Agriculture": "Use technology to optimize resource use and increase efficiency.",
-        "Participate in Carbon Sequestration": "Sequester carbon through tree planting and no-till farming."
-    }
+# Sustainable Practices Recommendations based on categories
+# Sustainable Practices Recommendations based on categories with embedded YouTube videos
+def sustainable_practices_recommendations(fertilizer_high, fuel_high, electricity_high, livestock_high, soil_high):
+    recommendations = []
+
+    if fertilizer_high:
+        recommendations.append((
+            "Use Organic Fertilizers", 
+            "Organic fertilizers improve soil health, reduce costs, and lower carbon footprint."
+        ))
+        recommendations.append((
+            "Use Less Fertilizer",
+            "Optimize fertilizer use by conducting soil tests to determine exact nutrient needs, reducing excess use."
+        ))
+        recommendations.append((
+            "Video Recommendation for Fertilizer Management",
+            st.video("https://youtu.be/RhkqQ8Oy8bQ?si=-oO1Bnw5VYjmiMfC")  # Replace with an actual Hindi video link
+        ))
+
+    if fuel_high:
+        recommendations.append((
+            "Implement Renewable Energy", 
+            "Use solar-powered machinery or wind energy to reduce fuel consumption."
+        ))
+        recommendations.append((
+            "Improve Machinery Efficiency",
+            "Regular maintenance and using fuel-efficient tractors can lower fuel usage."
+        ))
+        recommendations.append((
+            "Video Recommendation for Reducing Fuel Consumption",
+            st.video("https://youtu.be/0iX9dLKi2-k?si=8x_j4rlDfUC7IsrR")  # Replace with an actual Hindi video link
+        ))
+
+    if electricity_high:
+        recommendations.append((
+            "Adopt Energy-Efficient Practices", 
+            "Switch to energy-efficient appliances and machinery to reduce electricity consumption."
+        ))
+        recommendations.append((
+            "Video Recommendation for Energy Efficiency",
+            st.video("https://youtu.be/adY9v74_YDM?si=P1BBQCBfYlrHltYp")  # Replace with an actual Hindi video link
+        ))
+
+    if livestock_high:
+        recommendations.append((
+            "Optimize Livestock Management",
+            "Adopt sustainable livestock practices such as improved feeding strategies to reduce methane emissions."
+        ))
+        recommendations.append((
+            "Video Recommendation for Livestock Management",
+            st.video("https://youtu.be/mgAQJl0Vhi0?si=4vFS7S1yCoqsNO2y")  # Replace with an actual Hindi video link
+        ))
+
+    if soil_high:
+        recommendations.append((
+            "Adopt No-Till Farming", 
+            "No-till farming reduces soil disturbance, helps sequester carbon, and improves soil health."
+        ))
+        recommendations.append((
+            "Video Recommendation for Soil Management",
+            st.video("https://youtu.be/pxDE5wNX2UM?si=2w7LPjzRYlpFXhjQ")  # Replace with an actual Hindi video link
+        ))
+
     return recommendations
+
 
 # Why Reduce Carbon Footprint?
 def why_reduce_carbon_footprint():
     st.markdown("""
-        <table style="width: 100%; font-family: 'Poppins', sans-serif; border-collapse: collapse; background-color: #5d94b0; padding: 10px; border-radius: 10px;">
+        <table style="width: 100%; font-family: 'Poppins', sans-serif; border-collapse: collapse; background-color: #444444; padding: 10px; border-radius: 10px;">
             <tr style="background-color: #388E3C; color: white;">
                 <th style="padding: 10px; text-align: left; font-size: 18px;">Why Reduce Carbon Footprint?</th>
             </tr>
@@ -143,7 +193,7 @@ def why_reduce_carbon_footprint():
         </table>
     """, unsafe_allow_html=True)
 
-# What Should Be the Average Carbon Footprint per Hectare?
+# Average Carbon Footprint Information
 def average_carbon_footprint_info():
     st.markdown("""
         <table style="width: 100%; font-family: 'Poppins', sans-serif; border-collapse: collapse; background-color: #5d94b0; padding: 10px; border-radius: 10px;">
@@ -167,6 +217,7 @@ def carbon_footprint_page():
         </div>
     """, unsafe_allow_html=True)
 
+    # Input fields for carbon footprint calculation
     fertilizer_kg = st.number_input("Fertilizer Use (kg):", value=500)
     fuel_liters = st.number_input("Fuel Consumption (liters):", value=1000)
     electricity_kwh = st.number_input("Electricity Consumption (kWh):", value=5000)
@@ -174,8 +225,11 @@ def carbon_footprint_page():
     soil_area_ha = st.number_input("Soil Area Managed (hectares):", value=10)
 
     if st.button("Calculate Carbon Footprint"):
-        carbon_footprint = calculate_carbon_footprint(fertilizer_kg, fuel_liters, electricity_kwh, livestock_count, soil_area_ha)
-        
+        carbon_footprint, fertilizer_emissions, fuel_emissions, electricity_emissions, livestock_emissions, soil_emissions = calculate_carbon_footprint(
+            fertilizer_kg, fuel_liters, electricity_kwh, livestock_count, soil_area_ha
+        )
+
+        # Display results in a table
         st.markdown(f"""
             <table style="width: 100%; font-family: 'Poppins', sans-serif; border-collapse: collapse; background-color: #5d94b0; padding: 10px; border-radius: 10px;">
                 <thead style="background-color: #388E3C; color: white;">
@@ -187,23 +241,23 @@ def carbon_footprint_page():
                 <tbody>
                     <tr>
                         <td style="padding: 10px; text-align: left;">Fertilizer</td>
-                        <td style="padding: 10px; text-align: right;">{fertilizer_kg * 2.87:.2f}</td>
+                        <td style="padding: 10px; text-align: right;">{fertilizer_emissions:.2f}</td>
                     </tr>
                     <tr>
                         <td style="padding: 10px; text-align: left;">Fuel</td>
-                        <td style="padding: 10px; text-align: right;">{fuel_liters * 2.68:.2f}</td>
+                        <td style="padding: 10px; text-align: right;">{fuel_emissions:.2f}</td>
                     </tr>
                     <tr>
                         <td style="padding: 10px; text-align: left;">Electricity</td>
-                        <td style="padding: 10px; text-align: right;">{electricity_kwh * 0.5:.2f}</td>
+                        <td style="padding: 10px; text-align: right;">{electricity_emissions:.2f}</td>
                     </tr>
                     <tr>
                         <td style="padding: 10px; text-align: left;">Livestock</td>
-                        <td style="padding: 10px; text-align: right;">{livestock_count * 1140:.2f}</td>
+                        <td style="padding: 10px; text-align: right;">{livestock_emissions:.2f}</td>
                     </tr>
                     <tr>
                         <td style="padding: 10px; text-align: left;">Soil</td>
-                        <td style="padding: 10px; text-align: right;">{soil_area_ha * 200:.2f}</td>
+                        <td style="padding: 10px; text-align: right;">{soil_emissions:.2f}</td>
                     </tr>
                     <tr style="background-color: #0b8766;">
                         <td style="padding: 10px; text-align: left;"><b>Total Emissions</b></td>
@@ -215,26 +269,33 @@ def carbon_footprint_page():
 
         average_carbon_footprint_info()
 
-        # Warning if carbon footprint is higher than the average
+        # Check if emissions exceed the average threshold and display specific recommendations
+        fertilizer_high = fertilizer_emissions / soil_area_ha > 2870.00
+        fuel_high = fuel_emissions / soil_area_ha > 2680.00
+        electricity_high = electricity_emissions / soil_area_ha > 500.00
+        livestock_high = livestock_emissions / soil_area_ha > 114000.00
+        soil_high = soil_emissions / soil_area_ha > 20000.00
+
         if carbon_footprint / soil_area_ha > 4000.00:
             st.markdown("""
                 <div style="background-color: #FFCDD2; padding: 10px; border-radius: 10px; color: #B71C1C; margin-top: 10px;">
                     ⚠️ Your carbon footprint is higher than the average. Consider adopting sustainable practices to reduce it.
                 </div>
             """, unsafe_allow_html=True)
+
+            recommendations = sustainable_practices_recommendations(fertilizer_high, fuel_high, electricity_high, livestock_high, soil_high)
+            if recommendations:
+                st.markdown("<h2 style='color: #388E3C;'>Suggestions to Reduce Carbon Footprint:</h2>", unsafe_allow_html=True)
+                st.markdown("<table style='width: 100%; font-family: \"Poppins\", sans-serif; border-collapse: collapse;'>", unsafe_allow_html=True)
+                for key, value in recommendations:
+                    st.markdown(f"<tr><td style='padding: 8px; border: 1px solid #ddd;'><b>{key}</b></td><td style='padding: 8px; border: 1px solid #ddd;'>{value}</td></tr>", unsafe_allow_html=True)
+                st.markdown("</table>", unsafe_allow_html=True)
         else:
             st.markdown("""
                 <div style="background-color: #C8E6C9; padding: 10px; border-radius: 10px; color: #388E3C; margin-top: 10px;">
                     ✅ Your carbon footprint is within the average range.
                 </div>
             """, unsafe_allow_html=True)
-
-        st.markdown("<h2 style='color: #388E3C;'>Suggestions to Reduce Carbon Footprint:</h2>", unsafe_allow_html=True)
-        recommendations = sustainable_practices_recommendations()
-        st.markdown("<table style='width: 100%; font-family: \"Poppins\", sans-serif; border-collapse: collapse;'>", unsafe_allow_html=True)
-        for key, value in recommendations.items():
-            st.markdown(f"<tr><td style='padding: 8px; border: 1px solid #ddd;'><b>{key}</b></td><td style='padding: 8px; border: 1px solid #ddd;'>{value}</td></tr>", unsafe_allow_html=True)
-        st.markdown("</table>", unsafe_allow_html=True)
 
         why_reduce_carbon_footprint()
 
@@ -352,7 +413,7 @@ def news_page():
     else:
         st.write("Failed to fetch news articles. Please check your API key.")
         
-
+@st.cache_resource
 def model_prediction(test_image):
     model = tf.keras.models.load_model("training_model.keras")
     image = tf.keras.preprocessing.image.load_img(test_image, target_size=(128, 128))
