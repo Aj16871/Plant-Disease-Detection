@@ -413,7 +413,7 @@ def news_page():
     else:
         st.write("Failed to fetch news articles. Please check your API key.")
         
-@st.cache_resource
+
 def model_prediction(test_image):
     model = tf.keras.models.load_model("training_model.keras")
     image = tf.keras.preprocessing.image.load_img(test_image, target_size=(128, 128))
