@@ -3,6 +3,7 @@ import tensorflow as tf
 import numpy as np
 from PIL import Image
 import requests
+from datetime import datetime
 
 # Define translations
 translations = {
@@ -306,12 +307,32 @@ def fetch_weather(api_key, lat, lon):
     response = requests.get(url)
     return response.json()
 
+# Fetch air quality
 def fetch_air_quality(api_key, lat, lon):
     url = f"http://api.openweathermap.org/data/2.5/air_pollution?lat={lat}&lon={lon}&appid={api_key}"
     response = requests.get(url)
     return response.json()
 
-def display_weather(weather_data, air_quality_data):
+# Fetch 5-day weather forecast
+def fetch_forecast(api_key, lat, lon):
+    url = f"http://api.openweathermap.org/data/2.5/forecast?lat={lat}&lon={lon}&appid={api_key}&units=metric"
+    response = requests.get(url)
+    return response.json()
+
+# Analyze forecast for watering recommendations
+def analyze_watering_needs(forecast_data):
+    total_rain = 0
+    for entry in forecast_data['list']:
+        if 'rain' in entry and '3h' in entry['rain']:
+            total_rain += entry['rain']['3h']
+    
+    if total_rain >= 10:  # Example threshold
+        return "No need to water the fields. Sufficient rainfall is expected."
+    else:
+        return "Consider watering the fields as rainfall is insufficient."
+
+# Display current weather and air quality in table format
+def display_weather_table(weather_data, air_quality_data):
     if weather_data.get("cod") != 200:
         st.error("City not found or API limit reached.")
         return
@@ -321,6 +342,7 @@ def display_weather(weather_data, air_quality_data):
     temp = weather_data["main"]["temp"]
     feels_like = weather_data["main"]["feels_like"]
     humidity = weather_data["main"]["humidity"]
+    wind_speed = weather_data["wind"]["speed"]
     weather_description = weather_data["weather"][0]["description"].capitalize()
     icon = weather_data["weather"][0]["icon"]
 
@@ -328,52 +350,92 @@ def display_weather(weather_data, air_quality_data):
     air_quality = ["Good", "Fair", "Moderate", "Poor", "Very Poor"][air_quality_index - 1]
 
     st.markdown(f"""
-        <div style="text-align: center; background: linear-gradient(135deg, #89f7fe 0%, #66a6ff 100%); padding: 20px; border-radius: 10px; color: #ffffff;">
-            <h2 style="font-size: 36px;">Weather in {city}, {country}</h2>
-            <img src="http://openweathermap.org/img/wn/{icon}.png" style="width: 100px;"/>
-            <h3 style="font-size: 28px;">{weather_description}</h3>
-            <p style="font-size: 24px;"><strong>Temperature:</strong> {temp}°C</p>
-            <p style="font-size: 24px;"><strong>Feels Like:</strong> {feels_like}°C</p>
-            <p style="font-size: 24px;"><strong>Humidity:</strong> {humidity}%</p>
-            <p style="font-size: 24px;"><strong>Air Quality:</strong> {air_quality}</p>
-        </div>
+        <table style="width: 100%; font-family: 'Poppins', sans-serif; border-collapse: collapse; background: linear-gradient(135deg, #89f7fe 0%, #66a6ff 100%); color: #ffffff; border-radius: 10px;">
+            <tr style="background-color: #66a6ff; color: #ffffff;">
+                <th colspan="2" style="padding: 10px; font-size: 24px;">Weather in {city}, {country}</th>
+            </tr>
+            <tr>
+                <td style="padding: 10px; font-size: 18px;">Weather</td>
+                <td style="padding: 10px; font-size: 18px;">{weather_description}</td>
+            </tr>
+            <tr>
+                <td style="padding: 10px; font-size: 18px;">Temperature</td>
+                <td style="padding: 10px; font-size: 18px;">{temp}°C</td>
+            </tr>
+            <tr>
+                <td style="padding: 10px; font-size: 18px;">Feels Like</td>
+                <td style="padding: 10px; font-size: 18px;">{feels_like}°C</td>
+            </tr>
+            <tr>
+                <td style="padding: 10px; font-size: 18px;">Humidity</td>
+                <td style="padding: 10px; font-size: 18px;">{humidity}%</td>
+            </tr>
+            <tr>
+                <td style="padding: 10px; font-size: 18px;">Wind Speed</td>
+                <td style="padding: 10px; font-size: 18px;">{wind_speed} m/s</td>
+            </tr>
+            <tr>
+                <td style="padding: 10px; font-size: 18px;">Air Quality</td>
+                <td style="padding: 10px; font-size: 18px;">{air_quality}</td>
+            </tr>
+        </table>
     """, unsafe_allow_html=True)
+
+# Display 5-day forecast and additional farming information in table format
+def display_forecast_and_advice_table(forecast_data):
+    st.markdown("<h2 style='text-align: center;'>5-Day Weather Forecast</h2>", unsafe_allow_html=True)
+    st.markdown("<table style='width: 100%; font-family: \"Poppins\", sans-serif; border-collapse: collapse;'>", unsafe_allow_html=True)
+    st.markdown("<tr style='background-color: #66a6ff; color: #ffffff;'><th>Date & Time</th><th>Weather</th><th>Temp (°C)</th><th>Humidity (%)</th><th>Wind Speed (m/s)</th><th>Rain (mm)</th></tr>", unsafe_allow_html=True)
+
+    for entry in forecast_data['list']:
+        dt_txt = entry['dt_txt']
+        weather_description = entry['weather'][0]['description'].capitalize()
+        temp = entry['main']['temp']
+        humidity = entry['main']['humidity']
+        wind_speed = entry['wind']['speed']
+        rain = entry.get('rain', {}).get('3h', 0)
+        
+        st.markdown(f"<tr><td>{dt_txt}</td><td>{weather_description}</td><td>{temp}</td><td>{humidity}</td><td>{wind_speed}</td><td>{rain}</td></tr>", unsafe_allow_html=True)
+    
+    st.markdown("</table>", unsafe_allow_html=True)
+    
+    # Watering advice and additional farming information
+    advice = analyze_watering_needs(forecast_data)
+    st.info(f"💧 Watering Advice: {advice}")
+    st.info("🌱 **Plan Ahead:** Based on the temperature trends, ensure you plan your planting and harvesting activities effectively.")
+    st.info("💨 **Wind Precautions:** If wind speeds are high, consider protecting sensitive crops or structures.")
 
 def weather_page():
     st.markdown("""
         <div style="text-align: center; background: linear-gradient(135deg, #89f7fe 0%, #66a6ff 100%); padding: 20px; border-radius: 10px;">
-            <h1 style="color: #ffffff; font-family: 'Poppins', sans-serif; font-size: 48px;">Weather Information</h1>
+            <h1 style="color: #ffffff; font-family: 'Poppins', sans-serif; font-size: 36px;">Weather and Farming Information</h1>
         </div>
     """, unsafe_allow_html=True)
 
     api_key = "e3adae5cd3177f317493c05f71b7062c"  # Your OpenWeather API key
 
-    try:
-        # Try to get the user's location using GPS
-        lat, lon = st.geolocation
-        weather_data = fetch_weather(api_key, lat, lon)
-        air_quality_data = fetch_air_quality(api_key, lat, lon)
-        display_weather(weather_data, air_quality_data)
-    except:
-        # If GPS is not available, provide an option to enter the city name manually
-        st.write("GPS location not available. Please enter your city name:")
-        city_name = st.text_input("Enter city name", "")
-        if st.button("Get Weather", key="weather_button"):
-            if city_name:
-                # Get the latitude and longitude of the city name
-                geocoding_url = f"http://api.openweathermap.org/geo/1.0/direct?q={city_name}&appid={api_key}"
-                geocoding_response = requests.get(geocoding_url)
-                geocoding_data = geocoding_response.json()
-                if geocoding_data:
-                    lat = geocoding_data[0]["lat"]
-                    lon = geocoding_data[0]["lon"]
-                    weather_data = fetch_weather(api_key, lat, lon)
-                    air_quality_data = fetch_air_quality(api_key, lat, lon)
-                    display_weather(weather_data, air_quality_data)
-                else:
-                    st.error("City not found.")
+    st.write("Please enter your city name:")
+    city_name = st.text_input("Enter city name", "")
+    if st.button("Get Weather", key="weather_button"):
+        if city_name:
+            # Get the latitude and longitude of the city name
+            geocoding_url = f"http://api.openweathermap.org/geo/1.0/direct?q={city_name}&appid={api_key}"
+            geocoding_response = requests.get(geocoding_url)
+            geocoding_data = geocoding_response.json()
+            if geocoding_data:
+                lat = geocoding_data[0]["lat"]
+                lon = geocoding_data[0]["lon"]
+                weather_data = fetch_weather(api_key, lat, lon)
+                air_quality_data = fetch_air_quality(api_key, lat, lon)
+                forecast_data = fetch_forecast(api_key, lat, lon)
+                display_weather_table(weather_data, air_quality_data)
+                display_forecast_and_advice_table(forecast_data)
             else:
-                st.error("Please enter a city name.")
+                st.error("City not found.")
+        else:
+            st.error("Please enter a city name.")
+
+
 
 def fetch_agriculture_news(api_key):
     url = f"https://newsapi.org/v2/everything?q=agriculture+India&apiKey={api_key}"
@@ -433,430 +495,507 @@ def get_class_name_from_predictions(predictions, filtered_class_names, class_nam
     return filtered_class_names[max_prediction_index]
 
 class Precaution:
-    
+
     def __init__(self, language="English"):
         self.language = language
         self.disease_details = {
-           
-    'Apple___Cedar_apple_rust': {
-        'precaution': {
-            "English": "Apply fungicides, remove infected leaves, and maintain good orchard hygiene to prevent further spread.\n",
-            "Hindi": "फफूंदनाशकों का उपयोग करें, संक्रमित पत्तियों को हटा दें और आगे फैलने से रोकने के लिए अच्छी बागवानी स्वच्छता बनाए रखें।\n"
-        },
-        'cause': {
-            "English": "Caused by the fungus *Gymnosporangium juniperi-virginianae*, which requires both apple and cedar trees to complete its lifecycle.\n",
-            "Hindi": "फफूंद *जिम्नोस्पोरेंजियम जुनीपेरी-वर्जिनियाना* के कारण होता है, जिसे अपना जीवन चक्र पूरा करने के लिए सेब और देवदार दोनों पेड़ों की आवश्यकता होती है।\n"
-        },
-        'symptoms': {
-            "English": "Yellow-orange spots on leaves, which later develop black, cup-shaped structures.\n",
-            "Hindi": "पत्तियों पर पीले-नारंगी धब्बे, जो बाद में काले, कप के आकार की संरचनाएं विकसित करते हैं।\n"
-        },
-        'management': {
-            "English": "Remove nearby cedar trees or galls, apply fungicides, and plant resistant apple varieties.\n",
-            "Hindi": "पास के देवदार के पेड़ या गॉल्स हटा दें, फफूंदनाशकों का उपयोग करें और प्रतिरोधी सेब की किस्में लगाएं।\n"
-        },
-        'fertilizer': {
-            "English": "Use a balanced fertilizer like 10-10-10 (NPK) in early spring. Apply 2-4 pounds per tree, depending on the age and size of the tree. Ensure that the fertilizer is spread evenly around the root zone.\n",
-            "Hindi": "शुरुआत में 10-10-10 (NPK) जैसे संतुलित उर्वरक का उपयोग करें। पेड़ की उम्र और आकार के अनुसार 2-4 पाउंड प्रति पेड़ लगाएं। सुनिश्चित करें कि उर्वरक को जड़ क्षेत्र के चारों ओर समान रूप से फैलाया जाए।\n"
+            'Apple___Cedar_apple_rust': {
+                'precaution': {
+                    "English": "Apply fungicides, remove infected leaves, and maintain good orchard hygiene to prevent further spread.\n",
+                    "Hindi": "फफूंदनाशकों का उपयोग करें, संक्रमित पत्तियों को हटा दें और आगे फैलने से रोकने के लिए अच्छी बागवानी स्वच्छता बनाए रखें।\n"
+                },
+                'cause': {
+                    "English": "Caused by the fungus *Gymnosporangium juniperi-virginianae*, which requires both apple and cedar trees to complete its lifecycle.\n",
+                    "Hindi": "फफूंद *जिम्नोस्पोरेंजियम जुनीपेरी-वर्जिनियाना* के कारण होता है, जिसे अपना जीवन चक्र पूरा करने के लिए सेब और देवदार दोनों पेड़ों की आवश्यकता होती है।\n"
+                },
+                'symptoms': {
+                    "English": "Yellow-orange spots on leaves, which later develop black, cup-shaped structures.\n",
+                    "Hindi": "पत्तियों पर पीले-नारंगी धब्बे, जो बाद में काले, कप के आकार की संरचनाएं विकसित करते हैं।\n"
+                },
+                'management': {
+                    "English": "Remove nearby cedar trees or galls, apply fungicides, and plant resistant apple varieties.\n",
+                    "Hindi": "पास के देवदार के पेड़ या गॉल्स हटा दें, फफूंदनाशकों का उपयोग करें और प्रतिरोधी सेब की किस्में लगाएं।\n"
+                },
+                'fertilizer': {
+                    "English": "Use a balanced fertilizer like 10-10-10 (NPK) in early spring. Apply 2-4 pounds per tree, depending on the age and size of the tree. Ensure that the fertilizer is spread evenly around the root zone.\n",
+                    "Hindi": "शुरुआत में 10-10-10 (NPK) जैसे संतुलित उर्वरक का उपयोग करें। पेड़ की उम्र और आकार के अनुसार 2-4 पाउंड प्रति पेड़ लगाएं। सुनिश्चित करें कि उर्वरक को जड़ क्षेत्र के चारों ओर समान रूप से फैलाया जाए।\n"
+                },
+                'video': {
+                    "English": "https://www.youtube.com/watch?v=VmIEx2klgzo",  # Placeholder URL
+                    "Hindi": "https://www.youtube.com/watch?v=VmIEx2klgzo"  # Placeholder URL
+                }
+            },
+            'Apple___healthy': {
+                'precaution': {
+                    "English": "No precautions needed, the plant is healthy.\n",
+                    "Hindi": "कोई सावधानी की आवश्यकता नहीं है, पौधा स्वस्थ है।\n"
+                },
+                'cause': {
+                    "English": "N/A\n",
+                    "Hindi": "एन/ए\n"
+                },
+                'symptoms': {
+                    "English": "N/A\n",
+                    "Hindi": "एन/ए\n"
+                },
+                'management': {
+                    "English": "Continue regular care to maintain plant health.\n",
+                    "Hindi": "पौधे की सेहत बनाए रखने के लिए नियमित देखभाल जारी रखें।\n"
+                },
+                'fertilizer': {
+                    "English": "Apply a balanced fertilizer such as 10-10-10 (NPK) at the start of the growing season. For young trees, use about 1 pound per year of tree age, up to a maximum of 10 pounds. Spread evenly in the root zone.\n",
+                    "Hindi": "उगने के मौसम की शुरुआत में 10-10-10 (NPK) जैसे संतुलित उर्वरक का उपयोग करें। युवा पेड़ों के लिए, पेड़ की उम्र के प्रति वर्ष लगभग 1 पाउंड का उपयोग करें, अधिकतम 10 पाउंड तक। इसे जड़ क्षेत्र में समान रूप से फैलाएं।\n"
+                },
+                'video': {
+                    "English": "https://www.youtube.com/watch?v=VmIEx2klgzo",  # Placeholder URL
+                    "Hindi": "https://www.youtube.com/watch?v=VmIEx2klgzo"  # Placeholder URL
+                }
+            },
+            'Cherry_(including_sour)___Powdery_mildew': {
+                'precaution': {
+                    "English": "Apply fungicides, remove infected leaves, and maintain good orchard hygiene to prevent further spread.\n",
+                    "Hindi": "फफूंदनाशकों का उपयोग करें, संक्रमित पत्तियों को हटा दें और आगे फैलने से रोकने के लिए अच्छी बागवानी स्वच्छता बनाए रखें।\n"
+                },
+                'cause': {
+                    "English": "Caused by the fungus *Podosphaera clandestina*, which thrives in warm, dry conditions.\n",
+                    "Hindi": "फफूंद *पोडोस्फेरा क्लैन्डेस्टिना* के कारण होता है, जो गर्म, सूखे वातावरण में पनपता है।\n"
+                },
+                'symptoms': {
+                    "English": "White, powdery fungal growth on leaves, shoots, and fruits.\n",
+                    "Hindi": "पत्तियों, शूट्स और फलों पर सफेद, फफूंदी वृद्धि।\n"
+                },
+                'management': {
+                    "English": "Prune for better air circulation, apply fungicides, and remove and destroy infected plant parts.\n",
+                    "Hindi": "हवा के संचार के लिए प्रूनिंग करें, फफूंदनाशकों का उपयोग करें और संक्रमित पौधे के हिस्सों को हटा और नष्ट करें।\n"
+                },
+                'fertilizer': {
+                    "English": "Apply a balanced fertilizer like 10-10-10 (NPK) in spring. For mature trees, apply 1-2 pounds per tree. Ensure even distribution and avoid direct contact with the trunk.\n",
+                    "Hindi": "वसंत में 10-10-10 (NPK) जैसे संतुलित उर्वरक का उपयोग करें। परिपक्व पेड़ों के लिए, प्रति पेड़ 1-2 पाउंड लगाएं। समान वितरण सुनिश्चित करें और तने के सीधे संपर्क से बचें।\n"
+                },
+                'video': {
+                    "English": "https://www.youtube.com/watch?v=VmIEx2klgzo",  # Placeholder URL
+                    "Hindi": "https://www.youtube.com/watch?v=VmIEx2klgzo"  # Placeholder URL
+                }
+            },
+            'Cherry_(including_sour)___healthy': {
+                'precaution': {
+                    "English": "No precautions needed, the plant is healthy.\n",
+                    "Hindi": "कोई सावधानी की आवश्यकता नहीं है, पौधा स्वस्थ है।\n"
+                },
+                'cause': {
+                    "English": "N/A\n",
+                    "Hindi": "एन/ए\n"
+                },
+                'symptoms': {
+                    "English": "N/A\n",
+                    "Hindi": "एन/ए\n"
+                },
+                'management': {
+                    "English": "Continue regular care to maintain plant health.\n",
+                    "Hindi": "पौधे की सेहत बनाए रखने के लिए नियमित देखभाल जारी रखें।\n"
+                },
+                'fertilizer': {
+                    "English": "Use a balanced fertilizer like 10-10-10 (NPK) in early spring. For young trees, apply 0.5 to 1 pound per year of tree age, up to 5 pounds.\n",
+                    "Hindi": "शुरुआत में 10-10-10 (NPK) जैसे संतुलित उर्वरक का उपयोग करें। युवा पेड़ों के लिए, पेड़ की उम्र के अनुसार 0.5 से 1 पाउंड तक का उपयोग करें, अधिकतम 5 पाउंड तक।\n"
+                },
+                'video': {
+                    "English": "https://www.youtube.com/watch?v=VmIEx2klgzo",  # Placeholder URL
+                    "Hindi": "https://www.youtube.com/watch?v=VmIEx2klgzo"  # Placeholder URL
+                }
+            },
+            'Corn_(maize)___Common_rust': {
+                'precaution': {
+                    "English": "Apply fungicides, remove infected leaves, and maintain good orchard hygiene to prevent further spread.\n",
+                    "Hindi": "फफूंदनाशकों का उपयोग करें, संक्रमित पत्तियों को हटा दें और आगे फैलने से रोकने के लिए अच्छी बागवानी स्वच्छता बनाए रखें।\n"
+                },
+                'cause': {
+                    "English": "Caused by the fungus *Puccinia sorghi*, spread by wind-blown spores.\n",
+                    "Hindi": "फफूंद *पुक्सिनिया सोर्घी* के कारण होता है, जिसका प्रसार हवा से उड़ने वाले स्पोर्स द्वारा होता है।\n"
+                },
+                'symptoms': {
+                    "English": "Reddish-brown pustules on both leaf surfaces, leading to leaf blighting.\n",
+                    "Hindi": "दोनों पत्ती सतहों पर लाल-भूरे रंग के पुस्टुल्स, जिसके कारण पत्ती का मुरझाना होता है।\n"
+                },
+                'management': {
+                    "English": "Use resistant corn varieties, apply fungicides if necessary, and practice crop rotation.\n",
+                    "Hindi": "प्रतिरोधी मक्का की किस्में उपयोग करें, आवश्यकता होने पर फफूंदनाशकों का उपयोग करें और फसल चक्रण का अभ्यास करें।\n"
+                },
+                'fertilizer': {
+                    "English": "Use a nitrogen-rich fertilizer, such as 46-0-0 (Urea). Apply 1-2 pounds per 100 square feet at the early growth stage.\n",
+                    "Hindi": "नाइट्रोजन से भरपूर उर्वरक का उपयोग करें, जैसे 46-0-0 (यूरिया)। शुरुआती विकास चरण में प्रति 100 वर्ग फीट पर 1-2 पाउंड लगाएं।\n"
+                },
+                'video': {
+                    "English": "https://www.youtube.com/watch?v=VmIEx2klgzo",  # Placeholder URL
+                    "Hindi": "https://www.youtube.com/watch?v=VmIEx2klgzo"  # Placeholder URL
+                }
+            },
+            'Corn_(maize)___healthy': {
+                'precaution': {
+                    "English": "No precautions needed, the plant is healthy.\n",
+                    "Hindi": "कोई सावधानी की आवश्यकता नहीं है, पौधा स्वस्थ है।\n"
+                },
+                'cause': {
+                    "English": "N/A\n",
+                    "Hindi": "एन/ए\n"
+                },
+                'symptoms': {
+                    "English": "N/A\n",
+                    "Hindi": "एन/ए\n"
+                },
+                'management': {
+                    "English": "Continue regular care to maintain plant health.\n",
+                    "Hindi": "पौधे की सेहत बनाए रखने के लिए नियमित देखभाल जारी रखें।\n"
+                },
+                'fertilizer': {
+                    "English": "Apply a balanced NPK fertilizer (20-20-20) at planting, followed by a side-dressing of nitrogen at the knee-high stage.\n",
+                    "Hindi": "रोपण के समय संतुलित NPK उर्वरक (20-20-20) लगाएं, इसके बाद घुटने-ऊँचाई के चरण में नाइट्रोजन की साइड-ड्रेसिंग करें।\n"
+                },
+                'video': {
+                    "English": "https://www.youtube.com/watch?v=VmIEx2klgzo",  # Placeholder URL
+                    "Hindi": "https://www.youtube.com/watch?v=VmIEx2klgzo"  # Placeholder URL
+                }
+            },
+            'Grape___Esca_(Black_Measles)': {
+                'precaution': {
+                    "English": "Apply fungicides, remove infected leaves, and maintain good orchard hygiene to prevent further spread.\n",
+                    "Hindi": "फफूंदनाशकों का उपयोग करें, संक्रमित पत्तियों को हटा दें और आगे फैलने से रोकने के लिए अच्छी बागवानी स्वच्छता बनाए रखें।\n"
+                },
+                'cause': {
+                    "English": "Caused by a complex of fungi, including *Phaeomoniella chlamydospora* and *Phaeoacremonium aleophilum*.\n",
+                    "Hindi": "फफूंदों के जटिल के कारण होता है, जिसमें *फियोमोनिएला क्लेमिडोस्पोरा* और *फियोएक्रेमोनियम एलियोफिलम* शामिल हैं।\n"
+                },
+                'symptoms': {
+                    "English": "Dark streaks in wood, leaf discoloration, and black spots on berries.\n",
+                    "Hindi": "लकड़ी में काले धब्बे, पत्ती का रंग बदलना और बेरी पर काले धब्बे।\n"
+                },
+                'management': {
+                    "English": "Prune out infected wood, avoid excessive irrigation, and apply fungicides to reduce infection.\n",
+                    "Hindi": "संक्रमित लकड़ी को हटा दें, अत्यधिक सिंचाई से बचें और संक्रमण को कम करने के लिए फफूंदनाशकों का उपयोग करें।\n"
+                },
+                'fertilizer': {
+                    "English": "Use a balanced fertilizer like 10-10-10 (NPK) in spring, and apply 1 pound per year of vine age, up to 6 pounds per vine. Mulch to retain moisture and suppress weeds.\n",
+                    "Hindi": "वसंत में 10-10-10 (NPK) जैसे संतुलित उर्वरक का उपयोग करें, और बेल की उम्र के अनुसार प्रति वर्ष 1 पाउंड, अधिकतम 6 पाउंड प्रति बेल लगाएं। नमी बनाए रखने और खरपतवार को दबाने के लिए मल्च का उपयोग करें।\n"
+                },
+                'video': {
+                    "English": "https://www.youtube.com/watch?v=VmIEx2klgzo",  # Placeholder URL
+                    "Hindi": "https://www.youtube.com/watch?v=VmIEx2klgzo"  # Placeholder URL
+                }
+            },
+            'Grape___healthy': {
+                'precaution': {
+                    "English": "No precautions needed, the plant is healthy.\n",
+                    "Hindi": "कोई सावधानी की आवश्यकता नहीं है, पौधा स्वस्थ है।\n"
+                },
+                'cause': {
+                    "English": "N/A\n",
+                    "Hindi": "एन/ए\n"
+                },
+                'symptoms': {
+                    "English": "N/A\n",
+                    "Hindi": "एन/ए\n"
+                },
+                'management': {
+                    "English": "Continue regular care to maintain plant health.\n",
+                    "Hindi": "पौधे की सेहत बनाए रखने के लिए नियमित देखभाल जारी रखें।\n"
+                },
+                'fertilizer': {
+                    "English": "Apply 1 pound of 10-10-10 (NPK) fertilizer per year of vine age, up to 4 pounds per vine. Fertilize in early spring before new growth begins.\n",
+                    "Hindi": "बेल की उम्र के अनुसार प्रति वर्ष 1 पाउंड 10-10-10 (NPK) उर्वरक लगाएं, अधिकतम 4 पाउंड प्रति बेल। नई वृद्धि शुरू होने से पहले प्रारंभिक वसंत में उर्वरक डालें।\n"
+                },
+                'video': {
+                    "English": "https://www.youtube.com/watch?v=VmIEx2klgzo",  # Placeholder URL
+                    "Hindi": "https://www.youtube.com/watch?v=VmIEx2klgzo"  # Placeholder URL
+                }
+            },
+            'Orange___Haunglongbing_(Citrus_greening)': {
+                'precaution': {
+                    "English": "Apply insecticides, remove infected leaves, and maintain good orchard hygiene to prevent further spread.\n",
+                    "Hindi": "कीटनाशकों का उपयोग करें, संक्रमित पत्तियों को हटा दें और आगे फैलने से रोकने के लिए अच्छी बागवानी स्वच्छता बनाए रखें।\n"
+                },
+                'cause': {
+                    "English": "Caused by the bacterium *Candidatus Liberibacter spp.*, spread by the Asian citrus psyllid.\n",
+                    "Hindi": "बैक्टीरिया *कैंडिडेटस लिबेरिबैक्टर स्पीपी.* के कारण होता है, जिसका प्रसार एशियन सिट्रस साइलिड द्वारा होता है।\n"
+                },
+                'symptoms': {
+                    "English": "Yellowing of leaves, misshapen fruit, and overall decline in tree health.\n",
+                    "Hindi": "पत्तियों का पीला होना, फल का विकृत होना और पेड़ की सेहत में समग्र गिरावट।\n"
+                },
+                'management': {
+                    "English": "Control psyllid populations with insecticides, remove infected trees, and use certified disease-free planting material.\n",
+                    "Hindi": "कीटनाशकों के साथ साइलिड आबादी को नियंत्रित करें, संक्रमित पेड़ों को हटा दें और प्रमाणित रोग-मुक्त पौध सामग्री का उपयोग करें।\n"
+                },
+                'fertilizer': {
+                    "English": "Apply a citrus-specific fertilizer with micronutrients, such as 6-4-6 or 8-3-9, during the growing season. Apply 1-2 pounds per tree in three equal doses throughout the year.\n",
+                    "Hindi": "माइक्रोन्यूट्रिएंट्स के साथ साइट्रस-विशिष्ट उर्वरक जैसे 6-4-6 या 8-3-9 का उपयोग करें। बढ़ते मौसम के दौरान प्रति वर्ष तीन बराबर खुराक में 1-2 पाउंड प्रति पेड़ लगाएं।\n"
+                },
+                'video': {
+                    "English": "https://www.youtube.com/watch?v=VmIEx2klgzo",  # Placeholder URL
+                    "Hindi": "https://www.youtube.com/watch?v=VmIEx2klgzo"  # Placeholder URL
+                }
+            },
+            'Peach___Bacterial_spot': {
+                'precaution': {
+                    "English": "Remove infected leaves, improve air circulation, and apply bactericides to prevent further spread.\n",
+                    "Hindi": "संक्रमित पत्तियों को हटा दें, हवा के संचार में सुधार करें और आगे फैलने से रोकने के लिए बैक्टीरियासाइड्स का उपयोग करें।\n"
+                },
+                'cause': {
+                    "English": "Caused by the bacterium *Xanthomonas campestris pv. pruni*, spread by rain and wind.\n",
+                    "Hindi": "बैक्टीरिया *जैन्थोमोनास कैम्पेस्ट्रिस पीवी प्रूनी* के कारण होता है, जिसका प्रसार वर्षा और हवा द्वारा होता है।\n"
+                },
+                'symptoms': {
+                    "English": "Small, water-soaked spots on leaves and fruit, leading to defoliation and fruit blemishes.\n",
+                    "Hindi": "पत्तियों और फल पर छोटे, पानी से भीगे हुए धब्बे, जिसके कारण पत्तियों का झड़ना और फल के दाग पड़ना होता है।\n"
+                },
+                'management': {
+                    "English": "Apply bactericides, prune trees to improve air circulation, and select resistant varieties.\n",
+                    "Hindi": "बैक्टीरियासाइड्स का उपयोग करें, पेड़ों की कटाई करें हवा के संचार में सुधार करें और प्रतिरोधी किस्में चुनें।\n"
+                },
+                'fertilizer': {
+                    "English": "Use a balanced fertilizer like 10-10-10 (NPK) in early spring. For mature trees, apply 1-2 pounds per tree. Ensure even distribution and avoid direct contact with the trunk.\n",
+                    "Hindi": "वसंत में 10-10-10 (NPK) जैसे संतुलित उर्वरक का उपयोग करें। परिपक्व पेड़ों के लिए, प्रति पेड़ 1-2 पाउंड लगाएं। समान वितरण सुनिश्चित करें और तने के सीधे संपर्क से बचें।\n"
+                },
+                'video': {
+                    "English": "https://www.youtube.com/watch?v=VmIEx2klgzo",  # Placeholder URL
+                    "Hindi": "https://www.youtube.com/watch?v=VmIEx2klgzo"  # Placeholder URL
+                }
+            },
+            'Peach___healthy': {
+                'precaution': {
+                    "English": "No precautions needed, the plant is healthy.\n",
+                    "Hindi": "कोई सावधानी की आवश्यकता नहीं है, पौधा स्वस्थ है।\n"
+                },
+                'cause': {
+                    "English": "N/A\n",
+                    "Hindi": "एन/ए\n"
+                },
+                'symptoms': {
+                    "English": "N/A\n",
+                    "Hindi": "एन/ए\n"
+                },
+                'management': {
+                    "English": "Continue regular care to maintain plant health.\n",
+                    "Hindi": "पौधे की सेहत बनाए रखने के लिए नियमित देखभाल जारी रखें।\n"
+                },
+                'fertilizer': {
+                    "English": "Apply a balanced fertilizer like 10-10-10 (NPK) in early spring. For young trees, apply 1 pound per year of tree age, up to 10 pounds per tree.\n",
+                    "Hindi": "वसंत में 10-10-10 (NPK) जैसे संतुलित उर्वरक का उपयोग करें। युवा पेड़ों के लिए, पेड़ की उम्र के अनुसार प्रति वर्ष 1 पाउंड, अधिकतम 10 पाउंड प्रति पेड़ लगाएं।\n"
+                },
+                'video': {
+                    "English": "https://www.youtube.com/watch?v=VmIEx2klgzo",  # Placeholder URL
+                    "Hindi": "https://www.youtube.com/watch?v=VmIEx2klgzo"  # Placeholder URL
+                }
+            },
+            'Pepper,_bell___Bacterial_spot': {
+                'precaution': {
+                    "English": "Remove infected leaves, improve air circulation, and apply bactericides to prevent further spread.\n",
+                    "Hindi": "संक्रमित पत्तियों को हटा दें, हवा के संचार में सुधार करें और आगे फैलने से रोकने के लिए बैक्टीरियासाइड्स का उपयोग करें।\n"
+                },
+                'cause': {
+                    "English": "Caused by several species of the bacterium *Xanthomonas*, spread by splashing water and contaminated tools.\n",
+                    "Hindi": "बैक्टीरिया *जैन्थोमोनास* की कई प्रजातियों के कारण होता है, जिसका प्रसार पानी के छींटे और दूषित औजारों द्वारा होता है।\n"
+                },
+                'symptoms': {
+                    "English": "Small, dark, water-soaked spots on leaves, stems, and fruit, often leading to defoliation.\n",
+                    "Hindi": "पत्तियों, तनों और फल पर छोटे, काले, पानी से भीगे हुए धब्बे, जिसके कारण अक्सर पत्तियों का झड़ना होता है।\n"
+                },
+                'management': {
+                    "English": "Practice crop rotation, avoid overhead irrigation, and use copper-based bactericides.\n",
+                    "Hindi": "फसल चक्रण का अभ्यास करें, ओवरहेड सिंचाई से बचें और ताम्बा-आधारित बैक्टीरियासाइड्स का उपयोग करें।\n"
+                },
+                'fertilizer': {
+                    "English": "Apply a balanced fertilizer like 10-10-10 (NPK) at planting, and side-dress with calcium nitrate (15.5-0-0) when fruiting begins. Use 2-3 pounds per 100 square feet.\n",
+                    "Hindi": "रोपण के समय 10-10-10 (NPK) जैसे संतुलित उर्वरक का उपयोग करें, और फल लगने पर कैल्शियम नाइट्रेट (15.5-0-0) से साइड-ड्रेसिंग करें। प्रति 100 वर्ग फीट 2-3 पाउंड का उपयोग करें।\n"
+                },
+                'video': {
+                    "English": "https://www.youtube.com/watch?v=VmIEx2klgzo",  # Placeholder URL
+                    "Hindi": "https://www.youtube.com/watch?v=VmIEx2klgzo"  # Placeholder URL
+                }
+            },
+            'Potato___Early_blight': {
+                'precaution': {
+                    "English": "Apply fungicides, remove infected leaves, and maintain good orchard hygiene to prevent further spread.\n",
+                    "Hindi": "फफूंदनाशकों का उपयोग करें, संक्रमित पत्तियों को हटा दें और अच्छी बागवानी स्वच्छता बनाए रखें आगे फैलने से रोकने के लिए।\n"
+                },
+                'cause': {
+                    "English": "Caused by the fungus *Alternaria solani*, which thrives in warm, wet conditions.\n",
+                    "Hindi": "फफूंद *अल्टरनारिया सोलानी* के कारण होता है, जिसका प्रसार गर्म, नम स्थितियों में होता है।\n"
+                },
+                'symptoms': {
+                    "English": "Dark brown spots with concentric rings on leaves, leading to defoliation.\n",
+                    "Hindi": "पत्तियों पर गहरे भूरे रंग के धब्बे, जिसके कारण पत्तियों का झड़ना होता है।\n"
+                },
+                'management': {
+                    "English": "Use certified seed potatoes, rotate crops, and apply fungicides as needed.\n",
+                    "Hindi": "प्रमाणित आलू बीज का उपयोग करें, फसल चक्रण करें और आवश्यकतानुसार फफूंदनाशकों का उपयोग करें।\n"
+                },
+                'fertilizer': {
+                    "English": "Apply a balanced fertilizer like 10-20-20 (NPK) at planting, and side-dress with nitrogen (34-0-0) after the plants reach 6 inches in height. Use 1.5 pounds per 100 feet of row.\n",
+                    "Hindi": "रोपण के समय 10-20-20 (NPK) जैसे संतुलित उर्वरक का उपयोग करें, और पौधों के 6 इंच की ऊँचाई तक पहुँचने के बाद नाइट्रोजन (34-0-0) से साइड-ड्रेसिंग करें। पंक्ति के 100 फीट प्रति 1.5 पाउंड का उपयोग करें।\n"
+                },
+                'video': {
+                    "English": "https://www.youtube.com/watch?v=VmIEx2klgzo",  # Placeholder URL
+                    "Hindi": "https://www.youtube.com/watch?v=VmIEx2klgzo"  # Placeholder URL
+                }
+            },
+            'Potato___healthy': {
+                'precaution': {
+                    "English": "No precautions needed, the plant is healthy.\n",
+                    "Hindi": "कोई सावधानी की आवश्यकता नहीं है, पौधा स्वस्थ है।\n"
+                },
+                'cause': {
+                    "English": "N/A\n",
+                    "Hindi": "एन/ए\n"
+                },
+                'symptoms': {
+                    "English": "N/A\n",
+                    "Hindi": "एन/ए\n"
+                },
+                'management': {
+                    "English": "Continue regular care to maintain plant health.\n",
+                    "Hindi": "पौधे की सेहत बनाए रखने के लिए नियमित देखभाल जारी रखें।\n"
+                },
+                'fertilizer': {
+                    "English": "Use a balanced fertilizer like 10-10-10 (NPK) at planting, followed by a side-dressing of nitrogen (34-0-0) after plants reach 6 inches in height. Use 2-3 pounds per 100 feet of row.\n",
+                    "Hindi": "रोपण के समय 10-10-10 (NPK) जैसे संतुलित उर्वरक का उपयोग करें, और पौधों के 6 इंच की ऊँचाई तक पहुँचने के बाद नाइट्रोजन (34-0-0) से साइड-ड्रेसिंग करें। पंक्ति के 100 फीट प्रति 2-3 पाउंड का उपयोग करें।\n"
+                },
+                'video': {
+                    "English": "https://www.youtube.com/watch?v=VmIEx2klgzo",  # Placeholder URL
+                    "Hindi": "https://www.youtube.com/watch?v=VmIEx2klgzo"  # Placeholder URL
+                }
+            },
+            'Squash___Powdery_mildew': {
+                'precaution': {
+                    "English": "Apply fungicides, remove infected leaves, and maintain good orchard hygiene to prevent further spread.\n",
+                    "Hindi": "फफूंदनाशकों का उपयोग करें, संक्रमित पत्तियों को हटा दें और अच्छी बागवानी स्वच्छता बनाए रखें आगे फैलने से रोकने के लिए।\n"
+                },
+                'cause': {
+                    "English": "Caused by several species of fungi, including *Podosphaera xanthii* and *Erysiphe cichoracearum*.\n",
+                    "Hindi": "फफूंद की कई प्रजातियों के कारण होता है, जिसमें *पोडोस्फेरा जैन्थी* और *एरीसिफे सिकोरेसियरम* शामिल हैं।\n"
+                },
+                'symptoms': {
+                    "English": "White, powdery fungal growth on leaves, stems, and fruit.\n",
+                    "Hindi": "पत्तियों, तनों और फल पर सफेद, पाउडरी फफूंदी वृद्धि।\n"
+                },
+                'management': {
+                    "English": "Apply fungicides, improve air circulation by spacing plants properly, and water plants at the base to keep leaves dry.\n",
+                    "Hindi": "फफूंदनाशकों का उपयोग करें, पौधों के बीच उचित दूरी रखकर हवा के संचार में सुधार करें और पौधों के आधार पर पानी दें ताकि पत्तियां सूखी रहें।\n"
+                },
+                'fertilizer': {
+                    "English": "Apply a balanced fertilizer like 10-10-10 (NPK) at planting, and side-dress with calcium nitrate (15.5-0-0) when flowering begins. Use 2-3 pounds per 100 square feet.\n",
+                    "Hindi": "रोपण के समय 10-10-10 (NPK) जैसे संतुलित उर्वरक का उपयोग करें, और फूल लगने पर कैल्शियम नाइट्रेट (15.5-0-0) से साइड-ड्रेसिंग करें। प्रति 100 वर्ग फीट 2-3 पाउंड का उपयोग करें।\n"
+                },
+                'video': {
+                    "English": "https://www.youtube.com/watch?v=VmIEx2klgzo",  # Placeholder URL
+                    "Hindi": "https://www.youtube.com/watch?v=VmIEx2klgzo"  # Placeholder URL
+                }
+            },
+            'Strawberry___Leaf_scorch': {
+                'precaution': {
+                    "English": "Remove infected leaves, improve air circulation, and apply bactericides to prevent further spread.\n",
+                    "Hindi": "संक्रमित पत्तियों को हटा दें, हवा के संचार में सुधार करें और बैक्टीरियासाइड्स का उपयोग करें आगे फैलने से रोकने के लिए।\n"
+                },
+                'cause': {
+                    "English": "Caused by the fungus *Diplocarpon earlianum*, which thrives in wet, warm conditions.\n",
+                    "Hindi": "फफूंद *डिप्लोकार्पोन एरलियनम* के कारण होता है, जिसका प्रसार नम, गर्म स्थितियों में होता है।\n"
+                },
+                'symptoms': {
+                    "English": "Irregular, dark purple spots on leaves, leading to leaf browning and drying.\n",
+                    "Hindi": "पत्तियों पर असामान्य, गहरे बैंगनी रंग के धब्बे, जिसके कारण पत्तियों का भूरा होना और सूखना होता है।\n"
+                },
+                'management': {
+                    "English": "Remove and destroy infected leaves, ensure good air circulation, and apply fungicides as needed.\n",
+                    "Hindi": "संक्रमित पत्तियों को हटा दें और नष्ट करें, अच्छा हवा के संचार सुनिश्चित करें, और आवश्यकतानुसार फफूंदनाशकों का उपयोग करें।\n"
+                },
+                'fertilizer': {
+                    "English": "Use a balanced fertilizer like 10-10-10 (NPK) in spring, and side-dress with ammonium nitrate (33-0-0) at mid-season. Use 2-3 pounds per 100 feet of row.\n",
+                    "Hindi": "वसंत में 10-10-10 (NPK) जैसे संतुलित उर्वरक का उपयोग करें, और मध्य-सीजन में अमोनियम नाइट्रेट (33-0-0) से साइड-ड्रेसिंग करें। पंक्ति के 100 फीट प्रति 2-3 पाउंड का उपयोग करें।\n"
+                },
+                'video': {
+                    "English": "https://www.youtube.com/watch?v=VmIEx2klgzo",  # Placeholder URL
+                    "Hindi": "https://www.youtube.com/watch?v=VmIEx2klgzo"  # Placeholder URL
+                }
+            },
+            'Tomato___Early_blight': {
+                'precaution': {
+                    "English": "Apply fungicides, remove infected leaves, and maintain good orchard hygiene to prevent further spread.\n",
+                    "Hindi": "फफूंदनाशकों का उपयोग करें, संक्रमित पत्तियों को हटा दें, और अच्छी बागवानी स्वच्छता बनाए रखें आगे फैलने से रोकने के लिए।\n"
+                },
+                'cause': {
+                    "English": "Caused by the fungus *Alternaria solani*, which thrives in warm, wet conditions.\n",
+                    "Hindi": "फफूंद *अल्टरनारिया सोलानी* के कारण होता है, जिसका प्रसार गर्म, नम स्थितियों में होता है।\n"
+                },
+                'symptoms': {
+                    "English": "Dark brown spots with concentric rings on leaves, leading to defoliation.\n",
+                    "Hindi": "पत्तियों पर गहरे भूरे रंग के धब्बे, जिसके कारण पत्तियों का झड़ना होता है।\n"
+                },
+                'management': {
+                    "English": "Use certified seeds, rotate crops, and apply fungicides during wet weather.\n",
+                    "Hindi": "प्रमाणित बीज का उपयोग करें, फसल चक्रण करें, और नम मौसम में फफूंदनाशकों का उपयोग करें।\n"
+                },
+                'fertilizer': {
+                    "English": "Use a balanced fertilizer like 10-10-10 (NPK) at planting, and side-dress with calcium nitrate (15.5-0-0) when fruiting begins. Apply 2-3 pounds per 100 feet of row.\n",
+                    "Hindi": "रोपण के समय 10-10-10 (NPK) जैसे संतुलित उर्वरक का उपयोग करें, और फल लगने पर कैल्शियम नाइट्रेट (15.5-0-0) से साइड-ड्रेसिंग करें। पंक्ति के 100 फीट पर 2-3 पाउंड का उपयोग करें।\n"
+                },
+                'video': {
+                    "English": "https://www.youtube.com/watch?v=VmIEx2klgzo",  # Placeholder URL
+                    "Hindi": "https://www.youtube.com/watch?v=VmIEx2klgzo"  # Placeholder URL
+                }
+            },
+            'Tomato___healthy': {
+                'precaution': {
+                    "English": "No precautions needed, the plant is healthy.\n",
+                    "Hindi": "कोई सावधानी की आवश्यकता नहीं है, पौधा स्वस्थ है।\n"
+                },
+                'cause': {
+                    "English": "N/A\n",
+                    "Hindi": "एन/ए\n"
+                },
+                'symptoms': {
+                    "English": "N/A\n",
+                    "Hindi": "एन/ए\n"
+                },
+                'management': {
+                    "English": "Continue regular care to maintain plant health.\n",
+                    "Hindi": "पौधे की सेहत बनाए रखने के लिए नियमित देखभाल जारी रखें।\n"
+                },
+                'fertilizer': {
+                    "English": "Use a balanced fertilizer like 10-10-10 (NPK) at planting, and side-dress with calcium nitrate (15.5-0-0) during the fruiting stage. Apply 2-3 pounds per 100 feet of row.\n",
+                    "Hindi": "रोपण के समय 10-10-10 (NPK) जैसे संतुलित उर्वरक का उपयोग करें, और फल लगने के दौरान कैल्शियम नाइट्रेट (15.5-0-0) से साइड-ड्रेसिंग करें। पंक्ति के 100 फीट पर 2-3 पाउंड का उपयोग करें।\n"
+                },
+                'video': {
+                    "English": "https://www.youtube.com/watch?v=VmIEx2klgzo",  # Placeholder URL
+                    "Hindi": "https://www.youtube.com/watch?v=VmIEx2klgzo"  # Placeholder URL
+                }
+            }
         }
-    },
-    'Apple___healthy': {
-        'precaution': {
-            "English": "No precautions needed, the plant is healthy.\n",
-            "Hindi": "कोई सावधानी की आवश्यकता नहीं है, पौधा स्वस्थ है।\n"
-        },
-        'cause': {
-            "English": "N/A\n",
-            "Hindi": "एन/ए\n"
-        },
-        'symptoms': {
-            "English": "N/A\n",
-            "Hindi": "एन/ए\n"
-        },
-        'management': {
-            "English": "Continue regular care to maintain plant health.\n",
-            "Hindi": "पौधे की सेहत बनाए रखने के लिए नियमित देखभाल जारी रखें।\n"
-        },
-        'fertilizer': {
-            "English": "Apply a balanced fertilizer such as 10-10-10 (NPK) at the start of the growing season. For young trees, use about 1 pound per year of tree age, up to a maximum of 10 pounds. Spread evenly in the root zone.\n",
-            "Hindi": "उगने के मौसम की शुरुआत में 10-10-10 (NPK) जैसे संतुलित उर्वरक का उपयोग करें। युवा पेड़ों के लिए, पेड़ की उम्र के प्रति वर्ष लगभग 1 पाउंड का उपयोग करें, अधिकतम 10 पाउंड तक। इसे जड़ क्षेत्र में समान रूप से फैलाएं।\n"
-        }
-    },
-    'Cherry_(including_sour)___Powdery_mildew': {
-        'precaution': {
-            "English": "Apply fungicides, remove infected leaves, and maintain good orchard hygiene to prevent further spread.\n",
-            "Hindi": "फफूंदनाशकों का उपयोग करें, संक्रमित पत्तियों को हटा दें और आगे फैलने से रोकने के लिए अच्छी बागवानी स्वच्छता बनाए रखें।\n"
-        },
-        'cause': {
-            "English": "Caused by the fungus *Podosphaera clandestina*, which thrives in warm, dry conditions.\n",
-            "Hindi": "फफूंद *पोडोस्फेरा क्लैन्डेस्टिना* के कारण होता है, जो गर्म, सूखे वातावरण में पनपता है।\n"
-        },
-        'symptoms': {
-            "English": "White, powdery fungal growth on leaves, shoots, and fruits.\n",
-            "Hindi": "पत्तियों, शूट्स और फलों पर सफेद, फफूंदी वृद्धि।\n"
-        },
-        'management': {
-            "English": "Prune for better air circulation, apply fungicides, and remove and destroy infected plant parts.\n",
-            "Hindi": "हवा के संचार के लिए प्रूनिंग करें, फफूंदनाशकों का उपयोग करें और संक्रमित पौधे के हिस्सों को हटा और नष्ट करें।\n"
-        },
-        'fertilizer': {
-            "English": "Apply a balanced fertilizer like 10-10-10 (NPK) in spring. For mature trees, apply 1-2 pounds per tree. Ensure even distribution and avoid direct contact with the trunk.\n",
-            "Hindi": "वसंत में 10-10-10 (NPK) जैसे संतुलित उर्वरक का उपयोग करें। परिपक्व पेड़ों के लिए, प्रति पेड़ 1-2 पाउंड लगाएं। समान वितरण सुनिश्चित करें और तने के सीधे संपर्क से बचें।\n"
-        }
-    },
-    'Cherry_(including_sour)___healthy': {
-        'precaution': {
-            "English": "No precautions needed, the plant is healthy.\n",
-            "Hindi": "कोई सावधानी की आवश्यकता नहीं है, पौधा स्वस्थ है।\n"
-        },
-        'cause': {
-            "English": "N/A\n",
-            "Hindi": "एन/ए\n"
-        },
-        'symptoms': {
-            "English": "N/A\n",
-            "Hindi": "एन/ए\n"
-        },
-        'management': {
-            "English": "Continue regular care to maintain plant health.\n",
-            "Hindi": "पौधे की सेहत बनाए रखने के लिए नियमित देखभाल जारी रखें।\n"
-        },
-        'fertilizer': {
-            "English": "Use a balanced fertilizer like 10-10-10 (NPK) in early spring. For young trees, apply 0.5 to 1 pound per year of tree age, up to 5 pounds.\n",
-            "Hindi": "शुरुआत में 10-10-10 (NPK) जैसे संतुलित उर्वरक का उपयोग करें। युवा पेड़ों के लिए, पेड़ की उम्र के अनुसार 0.5 से 1 पाउंड तक का उपयोग करें, अधिकतम 5 पाउंड तक।\n"
-        }
-    },
-    'Corn_(maize)___Common_rust': {
-        'precaution': {
-            "English": "Apply fungicides, remove infected leaves, and maintain good orchard hygiene to prevent further spread.\n",
-            "Hindi": "फफूंदनाशकों का उपयोग करें, संक्रमित पत्तियों को हटा दें और आगे फैलने से रोकने के लिए अच्छी बागवानी स्वच्छता बनाए रखें।\n"
-        },
-        'cause': {
-            "English": "Caused by the fungus *Puccinia sorghi*, spread by wind-blown spores.\n",
-            "Hindi": "फफूंद *पुक्सिनिया सोर्घी* के कारण होता है, जिसका प्रसार हवा से उड़ने वाले स्पोर्स द्वारा होता है।\n"
-        },
-        'symptoms': {
-            "English": "Reddish-brown pustules on both leaf surfaces, leading to leaf blighting.\n",
-            "Hindi": "दोनों पत्ती सतहों पर लाल-भूरे रंग के पुस्टुल्स, जिसके कारण पत्ती का मुरझाना होता है।\n"
-        },
-        'management': {
-            "English": "Use resistant corn varieties, apply fungicides if necessary, and practice crop rotation.\n",
-            "Hindi": "प्रतिरोधी मक्का की किस्में उपयोग करें, आवश्यकता होने पर फफूंदनाशकों का उपयोग करें और फसल चक्रण का अभ्यास करें।\n"
-        },
-        'fertilizer': {
-            "English": "Use a nitrogen-rich fertilizer, such as 46-0-0 (Urea). Apply 1-2 pounds per 100 square feet at the early growth stage.\n",
-            "Hindi": "नाइट्रोजन से भरपूर उर्वरक का उपयोग करें, जैसे 46-0-0 (यूरिया)। शुरुआती विकास चरण में प्रति 100 वर्ग फीट पर 1-2 पाउंड लगाएं।\n"
-        }
-    },
-    'Corn_(maize)___healthy': {
-        'precaution': {
-            "English": "No precautions needed, the plant is healthy.\n",
-            "Hindi": "कोई सावधानी की आवश्यकता नहीं है, पौधा स्वस्थ है।\n"
-        },
-        'cause': {
-            "English": "N/A\n",
-            "Hindi": "एन/ए\n"
-        },
-        'symptoms': {
-            "English": "N/A\n",
-            "Hindi": "एन/ए\n"
-        },
-        'management': {
-            "English": "Continue regular care to maintain plant health.\n",
-            "Hindi": "पौधे की सेहत बनाए रखने के लिए नियमित देखभाल जारी रखें।\n"
-        },
-        'fertilizer': {
-            "English": "Apply a balanced NPK fertilizer (20-20-20) at planting, followed by a side-dressing of nitrogen at the knee-high stage.\n",
-            "Hindi": "रोपण के समय संतुलित NPK उर्वरक (20-20-20) लगाएं, इसके बाद घुटने-ऊँचाई के चरण में नाइट्रोजन की साइड-ड्रेसिंग करें।\n"
-        }
-    },
-    'Grape___Esca_(Black_Measles)': {
-        'precaution': {
-            "English": "Apply fungicides, remove infected leaves, and maintain good orchard hygiene to prevent further spread.\n",
-            "Hindi": "फफूंदनाशकों का उपयोग करें, संक्रमित पत्तियों को हटा दें और आगे फैलने से रोकने के लिए अच्छी बागवानी स्वच्छता बनाए रखें।\n"
-        },
-        'cause': {
-            "English": "Caused by a complex of fungi, including *Phaeomoniella chlamydospora* and *Phaeoacremonium aleophilum*.\n",
-            "Hindi": "फफूंदों के जटिल के कारण होता है, जिसमें *फियोमोनिएला क्लेमिडोस्पोरा* और *फियोएक्रेमोनियम एलियोफिलम* शामिल हैं।\n"
-        },
-        'symptoms': {
-            "English": "Dark streaks in wood, leaf discoloration, and black spots on berries.\n",
-            "Hindi": "लकड़ी में काले धब्बे, पत्ती का रंग बदलना और बेरी पर काले धब्बे।\n"
-        },
-        'management': {
-            "English": "Prune out infected wood, avoid excessive irrigation, and apply fungicides to reduce infection.\n",
-            "Hindi": "संक्रमित लकड़ी को हटा दें, अत्यधिक सिंचाई से बचें और संक्रमण को कम करने के लिए फफूंदनाशकों का उपयोग करें।\n"
-        },
-        'fertilizer': {
-            "English": "Use a balanced fertilizer like 10-10-10 (NPK) in spring, and apply 1 pound per year of vine age, up to 6 pounds per vine. Mulch to retain moisture and suppress weeds.\n",
-            "Hindi": "वसंत में 10-10-10 (NPK) जैसे संतुलित उर्वरक का उपयोग करें, और बेल की उम्र के अनुसार प्रति वर्ष 1 पाउंड, अधिकतम 6 पाउंड प्रति बेल लगाएं। नमी बनाए रखने और खरपतवार को दबाने के लिए मल्च का उपयोग करें।\n"
-        }
-    },
-    'Grape___healthy': {
-        'precaution': {
-            "English": "No precautions needed, the plant is healthy.\n",
-            "Hindi": "कोई सावधानी की आवश्यकता नहीं है, पौधा स्वस्थ है।\n"
-        },
-        'cause': {
-            "English": "N/A\n",
-            "Hindi": "एन/ए\n"
-        },
-        'symptoms': {
-            "English": "N/A\n",
-            "Hindi": "एन/ए\n"
-        },
-        'management': {
-            "English": "Continue regular care to maintain plant health.\n",
-            "Hindi": "पौधे की सेहत बनाए रखने के लिए नियमित देखभाल जारी रखें।\n"
-        },
-        'fertilizer': {
-            "English": "Apply 1 pound of 10-10-10 (NPK) fertilizer per year of vine age, up to 4 pounds per vine. Fertilize in early spring before new growth begins.\n",
-            "Hindi": "बेल की उम्र के अनुसार प्रति वर्ष 1 पाउंड 10-10-10 (NPK) उर्वरक लगाएं, अधिकतम 4 पाउंड प्रति बेल। नई वृद्धि शुरू होने से पहले प्रारंभिक वसंत में उर्वरक डालें।\n"
-        }
-    },
-    'Orange___Haunglongbing_(Citrus_greening)': {
-        'precaution': {
-            "English": "Apply insecticides, remove infected leaves, and maintain good orchard hygiene to prevent further spread.\n",
-            "Hindi": "कीटनाशकों का उपयोग करें, संक्रमित पत्तियों को हटा दें और आगे फैलने से रोकने के लिए अच्छी बागवानी स्वच्छता बनाए रखें।\n"
-        },
-        'cause': {
-            "English": "Caused by the bacterium *Candidatus Liberibacter spp.*, spread by the Asian citrus psyllid.\n",
-            "Hindi": "बैक्टीरिया *कैंडिडेटस लिबेरिबैक्टर स्पीपी.* के कारण होता है, जिसका प्रसार एशियन सिट्रस साइलिड द्वारा होता है।\n"
-        },
-        'symptoms': {
-            "English": "Yellowing of leaves, misshapen fruit, and overall decline in tree health.\n",
-            "Hindi": "पत्तियों का पीला होना, फल का विकृत होना और पेड़ की सेहत में समग्र गिरावट।\n"
-        },
-        'management': {
-            "English": "Control psyllid populations with insecticides, remove infected trees, and use certified disease-free planting material.\n",
-            "Hindi": "कीटनाशकों के साथ साइलिड आबादी को नियंत्रित करें, संक्रमित पेड़ों को हटा दें और प्रमाणित रोग-मुक्त पौध सामग्री का उपयोग करें।\n"
-        },
-        'fertilizer': {
-            "English": "Apply a citrus-specific fertilizer with micronutrients, such as 6-4-6 or 8-3-9, during the growing season. Apply 1-2 pounds per tree in three equal doses throughout the year.\n",
-            "Hindi": "माइक्रोन्यूट्रिएंट्स के साथ साइट्रस-विशिष्ट उर्वरक जैसे 6-4-6 या 8-3-9 का उपयोग करें। बढ़ते मौसम के दौरान प्रति वर्ष तीन बराबर खुराक में 1-2 पाउंड प्रति पेड़ लगाएं।\n"
-        }
-    },
-    'Peach___Bacterial_spot': {
-        'precaution': {
-            "English": "Remove infected leaves, improve air circulation, and apply bactericides to prevent further spread.\n",
-            "Hindi": "संक्रमित पत्तियों को हटा दें, हवा के संचार में सुधार करें और आगे फैलने से रोकने के लिए बैक्टीरियासाइड्स का उपयोग करें।\n"
-        },
-        'cause': {
-            "English": "Caused by the bacterium *Xanthomonas campestris pv. pruni*, spread by rain and wind.\n",
-            "Hindi": "बैक्टीरिया *जैन्थोमोनास कैम्पेस्ट्रिस पीवी प्रूनी* के कारण होता है, जिसका प्रसार वर्षा और हवा द्वारा होता है।\n"
-        },
-        'symptoms': {
-            "English": "Small, water-soaked spots on leaves and fruit, leading to defoliation and fruit blemishes.\n",
-            "Hindi": "पत्तियों और फल पर छोटे, पानी से भीगे हुए धब्बे, जिसके कारण पत्तियों का झड़ना और फल के दाग पड़ना होता है।\n"
-        },
-        'management': {
-            "English": "Apply bactericides, prune trees to improve air circulation, and select resistant varieties.\n",
-            "Hindi": "बैक्टीरियासाइड्स का उपयोग करें, पेड़ों की कटाई करें हवा के संचार में सुधार करें और प्रतिरोधी किस्में चुनें।\n"
-        },
-        'fertilizer': {
-            "English": "Use a balanced fertilizer like 10-10-10 (NPK) in early spring. For mature trees, apply 1-2 pounds per tree. Ensure even distribution and avoid direct contact with the trunk.\n",
-            "Hindi": "वसंत में 10-10-10 (NPK) जैसे संतुलित उर्वरक का उपयोग करें। परिपक्व पेड़ों के लिए, प्रति पेड़ 1-2 पाउंड लगाएं। समान वितरण सुनिश्चित करें और तने के सीधे संपर्क से बचें।\n"
-        }
-    },
-    'Peach___healthy': {
-        'precaution': {
-            "English": "No precautions needed, the plant is healthy.\n",
-            "Hindi": "कोई सावधानी की आवश्यकता नहीं है, पौधा स्वस्थ है।\n"
-        },
-        'cause': {
-            "English": "N/A\n",
-            "Hindi": "एन/ए\n"
-        },
-        'symptoms': {
-            "English": "N/A\n",
-            "Hindi": "एन/ए\n"
-        },
-        'management': {
-            "English": "Continue regular care to maintain plant health.\n",
-            "Hindi": "पौधे की सेहत बनाए रखने के लिए नियमित देखभाल जारी रखें।\n"
-        },
-        'fertilizer': {
-            "English": "Apply a balanced fertilizer like 10-10-10 (NPK) in early spring. For young trees, apply 1 pound per year of tree age, up to 10 pounds per tree.\n",
-            "Hindi": "वसंत में 10-10-10 (NPK) जैसे संतुलित उर्वरक का उपयोग करें। युवा पेड़ों के लिए, पेड़ की उम्र के अनुसार प्रति वर्ष 1 पाउंड, अधिकतम 10 पाउंड प्रति पेड़ लगाएं।\n"
-        }
-    },
-    'Pepper,_bell___Bacterial_spot': {
-        'precaution': {
-            "English": "Remove infected leaves, improve air circulation, and apply bactericides to prevent further spread.\n",
-            "Hindi": "संक्रमित पत्तियों को हटा दें, हवा के संचार में सुधार करें और आगे फैलने से रोकने के लिए बैक्टीरियासाइड्स का उपयोग करें।\n"
-        },
-        'cause': {
-            "English": "Caused by several species of the bacterium *Xanthomonas*, spread by splashing water and contaminated tools.\n",
-            "Hindi": "बैक्टीरिया *जैन्थोमोनास* की कई प्रजातियों के कारण होता है, जिसका प्रसार पानी के छींटे और दूषित औजारों द्वारा होता है।\n"
-        },
-        'symptoms': {
-            "English": "Small, dark, water-soaked spots on leaves, stems, and fruit, often leading to defoliation.\n",
-            "Hindi": "पत्तियों, तनों और फल पर छोटे, काले, पानी से भीगे हुए धब्बे, जिसके कारण अक्सर पत्तियों का झड़ना होता है।\n"
-        },
-        'management': {
-            "English": "Practice crop rotation, avoid overhead irrigation, and use copper-based bactericides.\n",
-            "Hindi": "फसल चक्रण का अभ्यास करें, ओवरहेड सिंचाई से बचें और ताम्बा-आधारित बैक्टीरियासाइड्स का उपयोग करें।\n"
-        },
-        'fertilizer': {
-            "English": "Apply a balanced fertilizer like 10-10-10 (NPK) at planting, and side-dress with calcium nitrate (15.5-0-0) when fruiting begins. Use 2-3 pounds per 100 square feet.\n",
-            "Hindi": "रोपण के समय 10-10-10 (NPK) जैसे संतुलित उर्वरक का उपयोग करें, और फल लगने पर कैल्शियम नाइट्रेट (15.5-0-0) से साइड-ड्रेसिंग करें। प्रति 100 वर्ग फीट 2-3 पाउंड का उपयोग करें।\n"
-        }
-    },
-    'Potato___Early_blight': {
-        'precaution': {
-            "English": "Apply fungicides, remove infected leaves, and maintain good orchard hygiene to prevent further spread.\n",
-            "Hindi": "फफूंदनाशकों का उपयोग करें, संक्रमित पत्तियों को हटा दें और अच्छी बागवानी स्वच्छता बनाए रखें आगे फैलने से रोकने के लिए।\n"
-        },
-        'cause': {
-            "English": "Caused by the fungus *Alternaria solani*, which thrives in warm, wet conditions.\n",
-            "Hindi": "फफूंद *अल्टरनारिया सोलानी* के कारण होता है, जिसका प्रसार गर्म, नम स्थितियों में होता है।\n"
-        },
-        'symptoms': {
-            "English": "Dark brown spots with concentric rings on leaves, leading to defoliation.\n",
-            "Hindi": "पत्तियों पर गहरे भूरे रंग के धब्बे, जिसके कारण पत्तियों का झड़ना होता है।\n"
-        },
-        'management': {
-            "English": "Use certified seed potatoes, rotate crops, and apply fungicides as needed.\n",
-            "Hindi": "प्रमाणित आलू बीज का उपयोग करें, फसल चक्रण करें और आवश्यकतानुसार फफूंदनाशकों का उपयोग करें।\n"
-        },
-        'fertilizer': {
-            "English": "Apply a balanced fertilizer like 10-20-20 (NPK) at planting, and side-dress with nitrogen (34-0-0) after the plants reach 6 inches in height. Use 1.5 pounds per 100 feet of row.\n",
-            "Hindi": "रोपण के समय 10-20-20 (NPK) जैसे संतुलित उर्वरक का उपयोग करें, और पौधों के 6 इंच की ऊँचाई तक पहुँचने के बाद नाइट्रोजन (34-0-0) से साइड-ड्रेसिंग करें। पंक्ति के 100 फीट प्रति 1.5 पाउंड का उपयोग करें।\n"
-        }
-    },
-    'Potato___healthy': {
-        'precaution': {
-            "English": "No precautions needed, the plant is healthy.\n",
-            "Hindi": "कोई सावधानी की आवश्यकता नहीं है, पौधा स्वस्थ है।\n"
-        },
-        'cause': {
-            "English": "N/A\n",
-            "Hindi": "एन/ए\n"
-        },
-        'symptoms': {
-            "English": "N/A\n",
-            "Hindi": "एन/ए\n"
-        },
-        'management': {
-            "English": "Continue regular care to maintain plant health.\n",
-            "Hindi": "पौधे की सेहत बनाए रखने के लिए नियमित देखभाल जारी रखें।\n"
-        },
-        'fertilizer': {
-            "English": "Use a balanced fertilizer like 10-10-10 (NPK) at planting, followed by a side-dressing of nitrogen (34-0-0) after plants reach 6 inches in height. Use 2-3 pounds per 100 feet of row.\n",
-            "Hindi": "रोपण के समय 10-10-10 (NPK) जैसे संतुलित उर्वरक का उपयोग करें, और पौधों के 6 इंच की ऊँचाई तक पहुँचने के बाद नाइट्रोजन (34-0-0) से साइड-ड्रेसिंग करें। पंक्ति के 100 फीट प्रति 2-3 पाउंड का उपयोग करें।\n"
-        }
-    },
-    'Squash___Powdery_mildew': {
-        'precaution': {
-            "English": "Apply fungicides, remove infected leaves, and maintain good orchard hygiene to prevent further spread.\n",
-            "Hindi": "फफूंदनाशकों का उपयोग करें, संक्रमित पत्तियों को हटा दें और अच्छी बागवानी स्वच्छता बनाए रखें आगे फैलने से रोकने के लिए।\n"
-        },
-        'cause': {
-            "English": "Caused by several species of fungi, including *Podosphaera xanthii* and *Erysiphe cichoracearum*.\n",
-            "Hindi": "फफूंद की कई प्रजातियों के कारण होता है, जिसमें *पोडोस्फेरा जैन्थी* और *एरीसिफे सिकोरेसियरम* शामिल हैं।\n"
-        },
-        'symptoms': {
-            "English": "White, powdery fungal growth on leaves, stems, and fruit.\n",
-            "Hindi": "पत्तियों, तनों और फल पर सफेद, पाउडरी फफूंदी वृद्धि।\n"
-        },
-        'management': {
-            "English": "Apply fungicides, improve air circulation by spacing plants properly, and water plants at the base to keep leaves dry.\n",
-            "Hindi": "फफूंदनाशकों का उपयोग करें, पौधों के बीच उचित दूरी रखकर हवा के संचार में सुधार करें और पौधों के आधार पर पानी दें ताकि पत्तियां सूखी रहें।\n"
-        },
-        'fertilizer': {
-            "English": "Apply a balanced fertilizer like 10-10-10 (NPK) at planting, and side-dress with calcium nitrate (15.5-0-0) when flowering begins. Use 2-3 pounds per 100 square feet.\n",
-            "Hindi": "रोपण के समय 10-10-10 (NPK) जैसे संतुलित उर्वरक का उपयोग करें, और फूल लगने पर कैल्शियम नाइट्रेट (15.5-0-0) से साइड-ड्रेसिंग करें। प्रति 100 वर्ग फीट 2-3 पाउंड का उपयोग करें।\n"
-        }
-    },
-    'Strawberry___Leaf_scorch': {
-        'precaution': {
-            "English": "Remove infected leaves, improve air circulation, and apply bactericides to prevent further spread.\n",
-            "Hindi": "संक्रमित पत्तियों को हटा दें, हवा के संचार में सुधार करें और बैक्टीरियासाइड्स का उपयोग करें आगे फैलने से रोकने के लिए।\n"
-        },
-        'cause': {
-            "English": "Caused by the fungus *Diplocarpon earlianum*, which thrives in wet, warm conditions.\n",
-            "Hindi": "फफूंद *डिप्लोकार्पोन एरलियनम* के कारण होता है, जिसका प्रसार नम, गर्म स्थितियों में होता है।\n"
-        },
-        'symptoms': {
-            "English": "Irregular, dark purple spots on leaves, leading to leaf browning and drying.\n",
-            "Hindi": "पत्तियों पर असामान्य, गहरे बैंगनी रंग के धब्बे, जिसके कारण पत्तियों का भूरा होना और सूखना होता है।\n"
-        },
-        'management': {
-            "English": "Remove and destroy infected leaves, ensure good air circulation, and apply fungicides as needed.\n",
-            "Hindi": "संक्रमित पत्तियों को हटा दें और नष्ट करें, अच्छा हवा के संचार सुनिश्चित करें, और आवश्यकतानुसार फफूंदनाशकों का उपयोग करें।\n"
-        },
-        'fertilizer': {
-            "English": "Use a balanced fertilizer like 10-10-10 (NPK) in spring, and side-dress with ammonium nitrate (33-0-0) at mid-season. Use 2-3 pounds per 100 feet of row.\n",
-            "Hindi": "वसंत में 10-10-10 (NPK) जैसे संतुलित उर्वरक का उपयोग करें, और मध्य-सीजन में अमोनियम नाइट्रेट (33-0-0) से साइड-ड्रेसिंग करें। पंक्ति के 100 फीट प्रति 2-3 पाउंड का उपयोग करें।\n"
-        }
-    },
-    'Tomato___Early_blight': {
-        'precaution': {
-            "English": "Apply fungicides, remove infected leaves, and maintain good orchard hygiene to prevent further spread.\n",
-            "Hindi": "फफूंदनाशकों का उपयोग करें, संक्रमित पत्तियों को हटा दें, और अच्छी बागवानी स्वच्छता बनाए रखें आगे फैलने से रोकने के लिए।\n"
-        },
-        'cause': {
-            "English": "Caused by the fungus *Alternaria solani*, which thrives in warm, wet conditions.\n",
-            "Hindi": "फफूंद *अल्टरनारिया सोलानी* के कारण होता है, जिसका प्रसार गर्म, नम स्थितियों में होता है।\n"
-        },
-        'symptoms': {
-            "English": "Dark brown spots with concentric rings on leaves, leading to defoliation.\n",
-            "Hindi": "पत्तियों पर गहरे भूरे रंग के धब्बे, जिसके कारण पत्तियों का झड़ना होता है।\n"
-        },
-        'management': {
-            "English": "Use certified seeds, rotate crops, and apply fungicides during wet weather.\n",
-            "Hindi": "प्रमाणित बीज का उपयोग करें, फसल चक्रण करें, और नम मौसम में फफूंदनाशकों का उपयोग करें।\n"
-        },
-        'fertilizer': {
-            "English": "Use a balanced fertilizer like 10-10-10 (NPK) at planting, and side-dress with calcium nitrate (15.5-0-0) when fruiting begins. Apply 2-3 pounds per 100 feet of row.\n",
-            "Hindi": "रोपण के समय 10-10-10 (NPK) जैसे संतुलित उर्वरक का उपयोग करें, और फल लगने पर कैल्शियम नाइट्रेट (15.5-0-0) से साइड-ड्रेसिंग करें। पंक्ति के 100 फीट पर 2-3 पाउंड का उपयोग करें।\n"
-        }
-    },
-    'Tomato___healthy': {
-        'precaution': {
-            "English": "No precautions needed, the plant is healthy.\n",
-            "Hindi": "कोई सावधानी की आवश्यकता नहीं है, पौधा स्वस्थ है।\n"
-        },
-        'cause': {
-            "English": "N/A\n",
-            "Hindi": "एन/ए\n"
-        },
-        'symptoms': {
-            "English": "N/A\n",
-            "Hindi": "एन/ए\n"
-        },
-        'management': {
-            "English": "Continue regular care to maintain plant health.\n",
-            "Hindi": "पौधे की सेहत बनाए रखने के लिए नियमित देखभाल जारी रखें।\n"
-        },
-        'fertilizer': {
-            "English": "Use a balanced fertilizer like 10-10-10 (NPK) at planting, and side-dress with calcium nitrate (15.5-0-0) during the fruiting stage. Apply 2-3 pounds per 100 feet of row.\n",
-            "Hindi": "रोपण के समय 10-10-10 (NPK) जैसे संतुलित उर्वरक का उपयोग करें, और फल लगने के दौरान कैल्शियम नाइट्रेट (15.5-0-0) से साइड-ड्रेसिंग करें। पंक्ति के 100 फीट पर 2-3 पाउंड का उपयोग करें।\n"
-        }
-    }
-}
-
 
     def get_precaution(self, class_name):
         disease_info = self.disease_details.get(class_name)
         if disease_info:
-            return (
-                f"**{translations[self.language]['precaution']}:** {disease_info['precaution'][self.language]}\n"
-                f"**{translations[self.language]['cause']}:** {disease_info['cause'][self.language]}\n"
-                f"**{translations[self.language]['symptoms']}:** {disease_info['symptoms'][self.language]}\n"
-                f"**{translations[self.language]['management']}:** {disease_info['management'][self.language]}\n"
-                f"**{translations[self.language]['fertilizer']}:** {disease_info['fertilizer'][self.language]}\n"
-            )
+            precaution_info = f"""
+            <div style='background-color: #000444; padding: 10px; border-radius: 10px;'>
+                <h4 style='color: #4CAF50;'>Precaution:</h4>
+                <p>{disease_info['precaution'][self.language]}</p>
+                <h4 style='color: #FF5722;'>Cause:</h4>
+                <p>{disease_info['cause'][self.language]}</p>
+                <h4 style='color: #9C27B0;'>Symptoms:</h4>
+                <p>{disease_info['symptoms'][self.language]}</p>
+                <h4 style='color: #03A9F4;'>Management:</h4>
+                <p>{disease_info['management'][self.language]}</p>
+                <h4 style='color: #FFC107;'>Fertilizer:</h4>
+                <p>{disease_info['fertilizer'][self.language]}</p>
+            </div>
+            """
+            video_url = disease_info['video'][self.language]
+            st.markdown(precaution_info, unsafe_allow_html=True)
+            st.video(video_url)  # Embed video in the app
         else:
             return "No specific precautions available for this disease."
 
 def display_prediction(class_name, language):
     precaution = Precaution(language=language)
     st.success(f"🌿 Model predicts: **{class_name}**")
-    precautions = precaution.get_precaution(class_name)
-    st.warning(f"{precautions}")
-
-
+    precaution.get_precaution(class_name)
 
 def soil_classification_page():
     st.markdown(""" <div style="text-align: center; background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); padding: 20px; border-radius: 10px;"> <h1 style="color: #ffffff; font-family: 'Poppins', sans-serif; font-size: 48px;">Soil Classification and Crop Recommendation</h1> </div> """, unsafe_allow_html=True)
