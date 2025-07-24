@@ -8,7 +8,7 @@ from datetime import datetime
 # Define translations
 translations = {
     "English": {
-        "title": "CropPro Assist",
+        "title": "AgroVision AI",
         "welcome": "Welcome to the Plant Disease Recognition System! 🌿🔍",
         "mission": "Our mission is to help in identifying plant diseases efficiently. Upload an image of a plant, and our system will analyze it to detect any signs of diseases.",
         "how_it_works": "How It Works",
@@ -48,7 +48,7 @@ translations = {
         "Weather": "Weather"
     },
     "Hindi": {
-        "title": "CropPro Assist",
+        "title": "AgroVision AI",
         "welcome": "प्लांट रोग पहचान प्रणाली में आपका स्वागत है! 🌿🔍",
         "mission": "हमारा मिशन पौधों के रोगों की पहचान में मदद करना है। एक पौधे की छवि अपलोड करें, और हमारी प्रणाली किसी भी रोग के लक्षणों का पता लगाने के लिए इसका विश्लेषण करेगी।",
         "how_it_works": "यह कैसे काम करता है",
